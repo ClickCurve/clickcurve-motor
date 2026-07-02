@@ -1,0 +1,17 @@
+{
+  "name": "clickcurve-motor",
+  "version": "1.0.0",
+  "description": "ClickCurve concept-motor: genereert 3 website-concepten per lead",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "test-lokaal": "node motor.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.22.2"
+  }
+}
