@@ -35,42 +35,36 @@ const PALETTEN = {
 // ============================================================
 async function vraagClaude(lead) {
   const key = process.env.ANTHROPIC_API_KEY;
-  const prompt = `Je schrijft de teksten voor een website volgens het StoryBrand-raamwerk (SB7). De KLANT is de held, het bedrijf is de GIDS. Spreek de bezoeker aan met "u".
+  const prompt = `Je schrijft de teksten voor DRIE verschillende websiteconcepten volgens het StoryBrand-raamwerk (SB7). De KLANT is de held, het bedrijf is de GIDS. Spreek de bezoeker aan met "u".
 
 === HET BEDRIJF ===
 Branche: ${lead.branche}
 Bedrijfsnaam: ${lead.bedrijf}
 Omschrijving: ${lead.omschrijving || '(geen)'}
 
-Schrijf ALLES specifiek voor de branche "${lead.branche}". Gebruik woorden, diensten, problemen en beelden die bij precies deze branche horen. Verzin GEEN diensten uit een andere sector. Als de branche bijvoorbeeld "${lead.branche}" is, dan gaan de teksten en foto-zoekwoorden ALLEEN over ${lead.branche}, nergens anders over.
+Schrijf ALLES specifiek voor de branche "${lead.branche}". Gebruik woorden, diensten, problemen en beelden die bij precies deze branche horen. Verzin GEEN diensten uit een andere sector.
 
-Geef UITSLUITEND geldige JSON terug, geen uitleg, exact dit formaat (de voorbeelden tussen haakjes zijn slechts uitleg van het soort inhoud, NIET letterlijk overnemen):
+=== DE DRIE CONCEPTEN ===
+De klant ontvangt drie concepten die ECHT van elkaar moeten verschillen in toon, kleursfeer en beeld:
+1. "redactioneel" — verfijnd en rustig. Toon: kalm, verzorgd, premium. Beelden: details, vakmanschap, texturen, stille composities.
+2. "helder" — warm en menselijk. Toon: direct, vriendelijk, toegankelijk. Beelden: mensen, gezichten, interactie, warme sfeer.
+3. "zakelijk" — professioneel en resultaatgericht. Toon: zelfverzekerd, concreet, zakelijk. Beelden: werkomgeving, resultaat, professionele context.
+
+Elke concepttekst is ANDERS geformuleerd (geen zin mag letterlijk in twee concepten voorkomen) en elk concept krijgt EIGEN foto-zoekwoorden vanuit de eigen beeld-invalshoek hierboven. De drie "sfeer"-waarden moeten alle drie VERSCHILLEND zijn.
+
+Geef UITSLUITEND geldige JSON terug, geen uitleg, exact dit formaat (tekst tussen haakjes is uitleg, NIET letterlijk overnemen):
 {
   "label": "(korte branche-aanduiding)",
-  "oneliner": "(aspirationele kopzin van max 9 woorden, over wat de KLANT wint)",
-  "subkop": "(1 zin van ca. 18 woorden over het aanbod en het voordeel voor de klant)",
-  "directe_cta": "(knoptekst 2-3 woorden)",
-  "transitionele_cta": "(lagedrempel-actie 2-4 woorden)",
-  "probleem_titel": "(korte kop die het probleem benoemt)",
-  "probleem_punten": ["(pijnpunt van de klant in 1 zin)", "(tweede pijnpunt)", "(derde pijnpunt)"],
-  "gids_empathie": "(1 zin empathie die laat zien dat u de klant begrijpt)",
-  "gids_autoriteit": "(1 zin die vertrouwen/autoriteit geeft)",
-  "plan": [
-    {"stap": "(korte staptitel 2-4 woorden)", "uitleg": "(1 korte zin)"},
-    {"stap": "(stap 2)", "uitleg": "(1 korte zin)"},
-    {"stap": "(stap 3)", "uitleg": "(1 korte zin)"}
-  ],
   "diensten": [
     {"t": "(dienst die past bij ${lead.branche})", "d": "(1 korte zin)"},
-    {"t": "(dienst die past bij ${lead.branche})", "d": "(1 korte zin)"},
-    {"t": "(dienst die past bij ${lead.branche})", "d": "(1 korte zin)"}
+    {"t": "(tweede dienst)", "d": "(1 korte zin)"},
+    {"t": "(derde dienst)", "d": "(1 korte zin)"}
   ],
-  "succes_punten": ["(wat de klant wint, kort)", "(tweede winst)", "(derde winst)"],
   "faq": [
     {"v": "(veelgestelde vraag van een klant in deze branche)", "a": "(geruststellend antwoord van 1-2 zinnen)"},
-    {"v": "(tweede veelgestelde vraag)", "a": "(antwoord)"},
-    {"v": "(derde veelgestelde vraag)", "a": "(antwoord)"},
-    {"v": "(vierde veelgestelde vraag)", "a": "(antwoord)"}
+    {"v": "(tweede vraag)", "a": "(antwoord)"},
+    {"v": "(derde vraag)", "a": "(antwoord)"},
+    {"v": "(vierde vraag)", "a": "(antwoord)"}
   ],
   "reviews": [
     ["(geloofwaardige review van 1 zin over ${lead.branche})", "(voornaam)"],
@@ -78,24 +72,49 @@ Geef UITSLUITEND geldige JSON terug, geen uitleg, exact dit formaat (de voorbeel
     ["(idem)", "(voornaam)"]
   ],
   "usps": ["(vertrouwenspunt 2-4 woorden)", "(idem)", "(idem)"],
-  "sfeer": "(kies exact EEN die past bij de branche: warm, groen, blauw, paars, zand, leisteen)",
-  "fotos": {
-    "hero": "(2-4 ENGELSE zoekwoorden voor een professionele sfeerfoto van een ${lead.branche}-bedrijf)",
-    "a": "(2-4 ENGELSE zoekwoorden, ander beeld dat past bij ${lead.branche})",
-    "b": "(2-4 ENGELSE zoekwoorden, ander beeld dat past bij ${lead.branche})",
-    "c": "(2-4 ENGELSE zoekwoorden, ander beeld dat past bij ${lead.branche})"
+  "concepten": {
+    "redactioneel": {
+      "sfeer": "(kies EEN: warm, groen, blauw, paars, zand, leisteen)",
+      "oneliner": "(kopzin max 9 woorden, over wat de KLANT wint, in de toon van dit concept)",
+      "subkop": "(1 zin van ca. 18 woorden)",
+      "directe_cta": "(knoptekst 2-3 woorden)",
+      "transitionele_cta": "(lagedrempel-actie 2-4 woorden)",
+      "probleem_titel": "(korte kop)",
+      "probleem_punten": ["(pijnpunt 1 zin)", "(tweede)", "(derde)"],
+      "gids_empathie": "(1 zin empathie)",
+      "gids_autoriteit": "(1 zin autoriteit)",
+      "plan": [
+        {"stap": "(staptitel 2-4 woorden)", "uitleg": "(1 korte zin)"},
+        {"stap": "(stap 2)", "uitleg": "(1 korte zin)"},
+        {"stap": "(stap 3)", "uitleg": "(1 korte zin)"}
+      ],
+      "succes_punten": ["(winst 1)", "(winst 2)", "(winst 3)"],
+      "fotos": {
+        "hero": "(2-4 ENGELSE zoekwoorden, beeld-invalshoek van DIT concept)",
+        "a": "(2-4 ENGELSE zoekwoorden, ander beeld)",
+        "b": "(idem)",
+        "c": "(idem)"
+      }
+    },
+    "helder": { (exact dezelfde velden, maar alles in de toon en beeld-invalshoek van concept "helder", met een ANDERE sfeer) },
+    "zakelijk": { (exact dezelfde velden, in de toon en beeld-invalshoek van concept "zakelijk", met weer een ANDERE sfeer) }
   }
 }
 
-Belangrijk: de one-liner en succes-punten gaan over de klant, niet over het bedrijf. De foto-zoekwoorden zijn ENGELS, concreet-professioneel, en horen 100% bij branche "${lead.branche}". Voeg bij elk foto-zoekwoord woorden toe die zorgen voor lichte, rustige, professionele beelden (bijvoorbeeld "bright", "clean", "modern", "professional"), zodat de foto's premium ogen en niet donker of rommelig zijn.`;
+Belangrijk: one-liners en succes-punten gaan over de klant, niet over het bedrijf. Alle foto-zoekwoorden zijn ENGELS, concreet-professioneel, horen 100% bij branche "${lead.branche}", en bevatten woorden voor lichte, rustige, professionele beelden (zoals "bright", "clean", "modern", "professional"). De 12 foto-zoekwoorden (3 concepten x 4) moeten onderling zoveel mogelijk verschillen zodat er geen dubbele beelden ontstaan.`;
 
   // ---- fallback zonder API-sleutel ----
   if (!key) {
     console.log('  ⚠ Geen ANTHROPIC_API_KEY — ik gebruik demo-teksten.');
-    return {
-      label: lead.branche,
-      oneliner: `Een zorg minder, perfect geregeld.`,
-      subkop: `${lead.bedrijf} neemt het werk uit handen, zodat u zich nergens druk om hoeft te maken.`,
+    const basisPlan = [
+      { stap: 'Neem contact op', uitleg: 'Vraag vrijblijvend een offerte aan.' },
+      { stap: 'Wij komen langs', uitleg: 'We bekijken het en maken een helder plan.' },
+      { stap: 'Klaar zonder zorgen', uitleg: 'Wij regelen het, u geniet van het resultaat.' },
+    ];
+    const maakConcept = (sfeer, oneliner, subkop, hoek) => ({
+      sfeer,
+      oneliner,
+      subkop,
       directe_cta: 'Vraag offerte aan',
       transitionele_cta: 'Bekijk ons werk',
       probleem_titel: 'Herkent u dit?',
@@ -106,20 +125,20 @@ Belangrijk: de one-liner en succes-punten gaan over de klant, niet over het bedr
       ],
       gids_empathie: 'Wij snappen dat u zekerheid wilt, geen verrassingen.',
       gids_autoriteit: 'Met jarenlange ervaring en tevreden klanten weet u dat het goed zit.',
-      plan: [
-        { stap: 'Neem contact op', uitleg: 'Vraag vrijblijvend een offerte aan.' },
-        { stap: 'Wij komen langs', uitleg: 'We bekijken het en maken een helder plan.' },
-        { stap: 'Klaar zonder zorgen', uitleg: 'Wij regelen het, u geniet van het resultaat.' },
-      ],
-      diensten: [
-        { t: 'Onze dienst', d: 'Een korte omschrijving van wat we doen.' },
-        { t: 'Tweede dienst', d: 'Nog een omschrijving van ons aanbod.' },
-        { t: 'Derde dienst', d: 'En waar we verder mee kunnen helpen.' },
-      ],
+      plan: basisPlan,
       succes_punten: [
         'Rust en zekerheid dat het goed geregeld is.',
         'Een resultaat waar u trots op bent.',
         'Tijd over voor de dingen die u leuk vindt.',
+      ],
+      fotos: { hero: `${lead.branche} ${hoek}`, a: `${lead.branche} detail`, b: `${lead.branche} werk`, c: `${lead.branche} resultaat` },
+    });
+    return {
+      label: lead.branche,
+      diensten: [
+        { t: 'Onze dienst', d: 'Een korte omschrijving van wat we doen.' },
+        { t: 'Tweede dienst', d: 'Nog een omschrijving van ons aanbod.' },
+        { t: 'Derde dienst', d: 'En waar we verder mee kunnen helpen.' },
       ],
       faq: [
         { v: 'Wat kost het?', a: 'Dat hangt af van uw situatie. U krijgt vooraf een heldere, vrijblijvende offerte zonder verrassingen.' },
@@ -133,8 +152,11 @@ Belangrijk: de one-liner en succes-punten gaan over de klant, niet over het bedr
         ['Snelle reactie en alles keurig geregeld. Top bedrijf.', 'Priya'],
       ],
       usps: ['Gratis & vrijblijvend', 'Reactie binnen 24 uur', 'Vakwerk met garantie'],
-      sfeer: 'blauw',
-      fotos: { hero: lead.branche, a: lead.branche, b: lead.branche, c: lead.branche },
+      concepten: {
+        redactioneel: maakConcept('zand', 'Vakwerk dat rust uitstraalt.', `${lead.bedrijf} werkt met oog voor detail, zodat u kunt vertrouwen op een verzorgd resultaat.`, 'craft detail'),
+        helder: maakConcept('warm', 'Gewoon goed geregeld, met een glimlach.', `${lead.bedrijf} staat voor u klaar met persoonlijke aandacht en duidelijke afspraken.`, 'people smiling'),
+        zakelijk: maakConcept('blauw', 'Resultaat waar u op kunt bouwen.', `${lead.bedrijf} levert professioneel werk met heldere afspraken en meetbaar resultaat.`, 'professional workspace'),
+      },
     };
   }
 
@@ -149,7 +171,7 @@ Belangrijk: de one-liner en succes-punten gaan over de klant, niet over het bedr
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 2000,
+        max_tokens: 4000,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
@@ -208,54 +230,77 @@ async function zoekFoto(term, breedte = 1400) {
 async function genereerConcepten(lead, outDir = path.join(__dirname, 'output')) {
   console.log(`\n▶ Lead: ${lead.bedrijf} (${lead.branche})`);
 
-  // 1+2. Claude: teksten + zoektermen
-  console.log('  • Claude: teksten en zoektermen...');
+  // 1+2. Claude: teksten + zoektermen (3 varianten in één antwoord)
+  console.log('  • Claude: teksten en zoektermen voor 3 concepten...');
   const ai = await vraagClaude(lead);
-  // --- diagnose: laat zien wat Claude teruggaf, zodat drift zichtbaar is ---
-  console.log(`    → kop: "${ai.oneliner}"`);
-  console.log(`    → foto-zoekwoorden: ${ai.fotos.hero} | ${ai.fotos.a} | ${ai.fotos.b} | ${ai.fotos.c}`);
+  const KEYS = ['redactioneel', 'helder', 'zakelijk'];
+  // veiligheidscheck: alle drie de concepten moeten er zijn
+  for (const k of KEYS) {
+    if (!ai.concepten || !ai.concepten[k]) throw new Error(`Antwoord mist concept "${k}"`);
+  }
+  // --- diagnose: per concept de kop + hero-zoekwoord, zodat drift zichtbaar is ---
+  for (const k of KEYS) {
+    console.log(`    → ${k}: "${ai.concepten[k].oneliner}" | hero: ${ai.concepten[k].fotos.hero}`);
+  }
 
-  // 3. foto's ophalen (parallel)
-  console.log('  • Unsplash: foto\'s ophalen...');
-  const [hero, a, b, c] = await Promise.all([
-    zoekFoto(ai.fotos.hero, 1400),
-    zoekFoto(ai.fotos.a, 900),
-    zoekFoto(ai.fotos.b, 900),
-    zoekFoto(ai.fotos.c, 900),
-  ]);
+  // 3. foto's ophalen: 12 stuks (4 per concept), parallel
+  console.log('  • Unsplash: 12 foto\'s ophalen (4 per concept)...');
+  const fotoJobs = [];
+  for (const k of KEYS) {
+    const f = ai.concepten[k].fotos;
+    fotoJobs.push(zoekFoto(f.hero, 1400), zoekFoto(f.a, 900), zoekFoto(f.b, 900), zoekFoto(f.c, 900));
+  }
+  const alleFotos = await Promise.all(fotoJobs);
 
-  // data-object samenstellen
-  const palet = PALETTEN[ai.sfeer] || PALETTEN.blauw;
-  const d = {
+  // kleurpalet per concept, met dedupe zodat de drie nooit dezelfde kleuren krijgen
+  const paletFallback = { redactioneel: 'zand', helder: 'warm', zakelijk: 'blauw' };
+  const gebruikteSferen = new Set();
+  function kiesPalet(sfeer, key) {
+    let s = PALETTEN[sfeer] ? sfeer : paletFallback[key];
+    if (gebruikteSferen.has(s)) s = paletFallback[key];
+    if (gebruikteSferen.has(s)) s = Object.keys(PALETTEN).find(x => !gebruikteSferen.has(x));
+    gebruikteSferen.add(s);
+    return PALETTEN[s];
+  }
+
+  // gedeelde gegevens + per concept een eigen data-object
+  const gedeeld = {
     bedrijf: lead.bedrijf,
     label: ai.label,
-    oneliner: ai.oneliner,
-    subkop: ai.subkop,
-    directe_cta: ai.directe_cta || 'Neem contact op',
-    transitionele_cta: ai.transitionele_cta || 'Bekijk ons werk',
-    probleem_titel: ai.probleem_titel || 'Herkent u dit?',
-    probleem_punten: ai.probleem_punten || [],
-    gids_empathie: ai.gids_empathie || '',
-    gids_autoriteit: ai.gids_autoriteit || '',
-    plan: ai.plan || [],
     diensten: ai.diensten,
-    succes_punten: ai.succes_punten || [],
     faq: ai.faq || [],
     reviews: ai.reviews,
     usps: ai.usps || ['Gratis & vrijblijvend', 'Snelle reactie', 'Met garantie'],
-    fotos: { hero, a, b, c },
     contact: lead.contact || {},
-    ...palet,
   };
+  const dPer = {};
+  KEYS.forEach((k, i) => {
+    const c = ai.concepten[k];
+    dPer[k] = {
+      ...gedeeld,
+      oneliner: c.oneliner,
+      subkop: c.subkop,
+      directe_cta: c.directe_cta || 'Neem contact op',
+      transitionele_cta: c.transitionele_cta || 'Bekijk ons werk',
+      probleem_titel: c.probleem_titel || 'Herkent u dit?',
+      probleem_punten: c.probleem_punten || [],
+      gids_empathie: c.gids_empathie || '',
+      gids_autoriteit: c.gids_autoriteit || '',
+      plan: c.plan || [],
+      succes_punten: c.succes_punten || [],
+      fotos: { hero: alleFotos[i * 4], a: alleFotos[i * 4 + 1], b: alleFotos[i * 4 + 2], c: alleFotos[i * 4 + 3] },
+      ...kiesPalet(c.sfeer, k),
+    };
+  });
 
   // 4. templates vullen + wegschrijven
   console.log('  • Templates vullen en wegschrijven...');
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
   const slug = lead.bedrijf.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const bestanden = {
-    [`${slug}-1-redactioneel.html`]: templates.editorial(d),
-    [`${slug}-2-helder.html`]: templates.vriendelijk(d),
-    [`${slug}-3-zakelijk.html`]: templates.zakelijk(d),
+    [`${slug}-1-redactioneel.html`]: templates.editorial(dPer.redactioneel),
+    [`${slug}-2-helder.html`]: templates.vriendelijk(dPer.helder),
+    [`${slug}-3-zakelijk.html`]: templates.zakelijk(dPer.zakelijk),
   };
   const paden = [];
   for (const [naam, html] of Object.entries(bestanden)) {
