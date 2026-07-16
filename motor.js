@@ -90,10 +90,11 @@ Geef UITSLUITEND geldige JSON terug, geen uitleg, exact dit formaat (tekst tusse
       ],
       "succes_punten": ["(winst 1)", "(winst 2)", "(winst 3)"],
       "fotos": {
-        "hero": "(2-4 ENGELSE zoekwoorden, beeld-invalshoek van DIT concept)",
+        "hero": "(2-4 ENGELSE zoekwoorden, beeld-invalshoek van DIT concept, geschikt als paginavullende sfeerfoto)",
         "a": "(2-4 ENGELSE zoekwoorden, ander beeld)",
         "b": "(idem)",
-        "c": "(idem)"
+        "c": "(idem)",
+        "portret": "(2-4 ENGELSE zoekwoorden voor een persoon/vakman uit deze branche aan het werk of vriendelijk in beeld, professioneel)"
       }
     },
     "helder": { (exact dezelfde velden, maar alles in de toon en beeld-invalshoek van concept "helder", met een ANDERE sfeer) },
@@ -101,7 +102,7 @@ Geef UITSLUITEND geldige JSON terug, geen uitleg, exact dit formaat (tekst tusse
   }
 }
 
-Belangrijk: one-liners en succes-punten gaan over de klant, niet over het bedrijf. Alle foto-zoekwoorden zijn ENGELS, concreet-professioneel, horen 100% bij branche "${lead.branche}", en bevatten woorden voor lichte, rustige, professionele beelden (zoals "bright", "clean", "modern", "professional"). De 12 foto-zoekwoorden (3 concepten x 4) moeten onderling zoveel mogelijk verschillen zodat er geen dubbele beelden ontstaan.`;
+Belangrijk: one-liners en succes-punten gaan over de klant, niet over het bedrijf. Alle foto-zoekwoorden zijn ENGELS, concreet-professioneel, horen 100% bij branche "${lead.branche}", en bevatten woorden voor lichte, rustige, professionele beelden (zoals "bright", "clean", "modern", "professional"). De 15 foto-zoekwoorden (3 concepten x 4) moeten onderling zoveel mogelijk verschillen zodat er geen dubbele beelden ontstaan.`;
 
   // ---- fallback zonder API-sleutel ----
   if (!key) {
@@ -131,7 +132,7 @@ Belangrijk: one-liners en succes-punten gaan over de klant, niet over het bedrij
         'Een resultaat waar u trots op bent.',
         'Tijd over voor de dingen die u leuk vindt.',
       ],
-      fotos: { hero: `${lead.branche} ${hoek}`, a: `${lead.branche} detail`, b: `${lead.branche} werk`, c: `${lead.branche} resultaat` },
+      fotos: { hero: `${lead.branche} ${hoek}`, a: `${lead.branche} detail`, b: `${lead.branche} werk`, c: `${lead.branche} resultaat`, portret: `${lead.branche} professional portrait` },
     });
     return {
       label: lead.branche,
@@ -243,12 +244,12 @@ async function genereerConcepten(lead, outDir = path.join(__dirname, 'output')) 
     console.log(`    → ${k}: "${ai.concepten[k].oneliner}" | hero: ${ai.concepten[k].fotos.hero}`);
   }
 
-  // 3. foto's ophalen: 12 stuks (4 per concept), parallel
-  console.log('  • Unsplash: 12 foto\'s ophalen (4 per concept)...');
+  // 3. foto's ophalen: 12 stuks (5 per concept), parallel
+  console.log('  • Unsplash: 15 foto\'s ophalen (5 per concept)...');
   const fotoJobs = [];
   for (const k of KEYS) {
     const f = ai.concepten[k].fotos;
-    fotoJobs.push(zoekFoto(f.hero, 1400), zoekFoto(f.a, 900), zoekFoto(f.b, 900), zoekFoto(f.c, 900));
+    fotoJobs.push(zoekFoto(f.hero, 1800), zoekFoto(f.a, 900), zoekFoto(f.b, 900), zoekFoto(f.c, 900), zoekFoto(f.portret || f.hero, 900));
   }
   const alleFotos = await Promise.all(fotoJobs);
 
@@ -288,7 +289,7 @@ async function genereerConcepten(lead, outDir = path.join(__dirname, 'output')) 
       gids_autoriteit: c.gids_autoriteit || '',
       plan: c.plan || [],
       succes_punten: c.succes_punten || [],
-      fotos: { hero: alleFotos[i * 4], a: alleFotos[i * 4 + 1], b: alleFotos[i * 4 + 2], c: alleFotos[i * 4 + 3] },
+      fotos: { hero: alleFotos[i * 5], a: alleFotos[i * 5 + 1], b: alleFotos[i * 5 + 2], c: alleFotos[i * 5 + 3], portret: alleFotos[i * 5 + 4] },
       ...kiesPalet(c.sfeer, k),
     };
   });

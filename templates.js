@@ -1,768 +1,687 @@
 // ============================================================
-// templates.js — 3 templates in StoryBrand-opbouw (SB7)
-// Volgorde: held/one-liner + CTA → probleem → gids (empathie +
-// autoriteit) → plan (3 stappen) → wat we doen → succes →
-// directe CTA. Klant = held, bedrijf = gids.
+// templates.js — DRIE totaal verschillende concepten
+//  1. NOTTE     (editorial)   : Calliano-DNA — full-bleed foto-hero,
+//     donker/crème, serif, portret met badge, portfolio-tegels.
+//  2. ATELIER   (vriendelijk) : licht editorial — split-hero (tekst
+//     naast staande foto), genummerde dienstenlijst, foto-mozaïek,
+//     groot citaat, dunne lijnen.
+//  3. STATEMENT (zakelijk)    : modern & uitgesproken — enorme
+//     typografie-hero met fotoband eronder, tellende cijfers,
+//     afwisselende werk-rijen, sticky CTA.
+// Zelfde data-model (d) voor alle drie; de motor blijft gelijk.
 // ============================================================
 
 function esc(s = '') {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
-function bg(url, fb) { return `background-color:${fb};background-image:url('${url}');background-size:cover;background-position:center;`; }
-function head(d, font) {
-  return `<!DOCTYPE html><html lang="nl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(d.bedrijf)}</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="${font}" rel="stylesheet">`;
-}
 const tel = d => esc((d.contact || {}).telefoon || '06 12 34 56 78');
 const mail = d => esc((d.contact || {}).email || 'info@voorbeeld.nl');
 
-// Universele, branche-neutrale SVG-iconen voor de diensten (stroke = currentColor).
-// Roteren op volgorde, zodat elke dienst een eigen icoon krijgt.
+function splitKop(s = '') {
+  const w = String(s).replace(/\.$/, '').split(' ');
+  if (w.length < 3) return [s, ''];
+  const cut = Math.max(1, Math.round(w.length * 0.45));
+  return [w.slice(0, cut).join(' '), w.slice(cut).join(' ')];
+}
+function img(url, alt = '') {
+  return `<img src="${esc(url)}" alt="${esc(alt)}" loading="lazy" onerror="this.remove()">`;
+}
+
+const ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
+const PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.2 6.6.8-4.9 4.6 1.3 6.5L12 16.9 6.1 20.1l1.3-6.5L2.5 9l6.6-.8L12 2z"/></svg>';
+const STARS = `<span class="stars" aria-label="5 sterren">${STAR.repeat(5)}</span>`;
 const ICONS = [
-  // vinkje in cirkel
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
-  // ster
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
-  // schild
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
-  // duim omhoog
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>',
-  // bliksem
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
-  // hart
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
 ];
 const icon = i => ICONS[i % ICONS.length];
 
-// Gedeelde wow-CSS (scroll-reveal, hovers, sticky CTA, FAQ-accordeon).
-// Werkt in elke template; gebruikt de bestaande --accent/--ink/--line variabelen.
-function wowCss() {
-  return `
-.js .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s cubic-bezier(.2,.6,.2,1),transform .7s cubic-bezier(.2,.6,.2,1)}
-.js .reveal.in{opacity:1;transform:none}
-@media(prefers-reduced-motion:reduce){.js .reveal{opacity:1;transform:none}}
-.band-imgs div,.hero-img{transition:transform .5s cubic-bezier(.2,.6,.2,1)}
-.band-imgs div:hover{transform:scale(1.03)}
-.sticky-cta{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(20,20,20,.96);backdrop-filter:blur(10px);transform:translateY(120%);transition:transform .4s cubic-bezier(.2,.6,.2,1);border-top:1px solid rgba(255,255,255,.1)}
-.sticky-cta.show{transform:none}
-.sticky-cta .scwrap{max-width:1180px;margin:0 auto;padding:13px 40px;display:flex;align-items:center;justify-content:space-between;gap:20px}
-.sticky-cta .t{color:#fff;font-weight:700;font-size:16px}
-.sticky-cta .t span{display:block;color:#b3b3b3;font-weight:400;font-size:13px}
-.sticky-cta .sc-actions{display:flex;gap:12px;align-items:center;flex-shrink:0}
-.sticky-cta .sc-tel{color:#fff;text-decoration:none;font-weight:600;font-size:15px}
-.sticky-cta .sc-btn{background:var(--accent);color:#fff;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none}
-.faqsec .faq-wrap{max-width:820px;margin:0 auto}
-.faq-item{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:14px;overflow:hidden}
-.faq-q{width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:22px 26px;font-weight:700;font-size:17px;color:var(--ink);display:flex;justify-content:space-between;align-items:center;gap:16px}
-.faq-q .fic{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:18px;font-weight:700;transition:transform .3s;line-height:1}
-.faq-item.open .faq-q .fic{transform:rotate(45deg)}
-.faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease;color:var(--soft);font-size:16px;line-height:1.6}
-.faq-a div{padding:0 26px 22px}
-@media(max-width:840px){.sticky-cta .t span{display:none}.sticky-cta .scwrap{padding:13px 20px}}`;
+function headTag(d, fonts, themeColor) {
+  return `<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(d.bedrijf)} — ${esc(d.label)}</title><meta name="description" content="${esc(d.subkop)}"><meta name="theme-color" content="${themeColor}"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="${fonts}" rel="stylesheet">`;
 }
 
-// Gedeelde FAQ-sectie. `cls` = extra sectieklasse voor achtergrondkleur per template.
-function faqSection(d, cls = '') {
-  if (!d.faq || !d.faq.length) return '';
-  return `<section class="faqsec ${cls}"><div class="wrap reveal"><div class="lab" style="text-align:center">Veelgestelde vragen</div><h2 class="sec-h" style="text-align:center;margin-left:auto;margin-right:auto">Goed om te weten.</h2>
-<div class="faq-wrap">${d.faq.map(f => `<div class="faq-item"><button class="faq-q">${esc(f.v)}<span class="fic">+</span></button><div class="faq-a"><div>${esc(f.a)}</div></div></div>`).join('')}</div></div></section>`;
-}
+// gedeelde mini-reset + animaties (bewust klein gehouden;
+// alle layout en sfeer is per concept eigen)
+const RESET = `
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;overflow-x:clip}
+body{margin:0;overflow-x:clip;-webkit-font-smoothing:antialiased}
+img{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+p{margin:0 0 1.1em}
+@media(prefers-reduced-motion:no-preference){
+.fx{opacity:0;transform:translateY(22px);animation:rise .8s cubic-bezier(.22,.7,.3,1) forwards}
+.fx-1{animation-delay:.05s}.fx-2{animation-delay:.18s}.fx-3{animation-delay:.32s}.fx-4{animation-delay:.46s}.fx-5{animation-delay:.6s}
+@keyframes rise{to{opacity:1;transform:none}}
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s cubic-bezier(.22,.7,.3,1)}
+.reveal.in{opacity:1;transform:none}
+.d1{transition-delay:.08s}.d2{transition-delay:.16s}.d3{transition-delay:.24s}
+}`;
 
-// Gedeelde sticky CTA-balk.
-function stickyCta(d) {
-  return `<div class="sticky-cta" id="stickyCta"><div class="scwrap"><div class="t">${esc(d.bedrijf)}<span>Gratis &amp; vrijblijvend · reactie binnen 24 uur</span></div><div class="sc-actions"><a class="sc-tel" href="tel:${tel(d)}">${tel(d)}</a><a href="#contact" class="sc-btn">${esc(d.directe_cta)}</a></div></div></div>`;
-}
-
-// Gedeelde JS (reveal, tellende cijfers, sticky CTA, FAQ) + body-class voor JS-detectie.
-function wowJs() {
-  return `<script>
-document.documentElement.className='js';document.body.className=(document.body.className+' js').trim();
+const NAV_REVEAL_JS = `
 (function(){
-  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.14});
-  document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
-  function ac(el){var t=parseFloat(el.getAttribute('data-count')),sf=el.getAttribute('data-suffix')||'',dc=parseInt(el.getAttribute('data-dec')||'0',10),d=1300,s=null;
-    function st(ts){if(!s)s=ts;var p=Math.min((ts-s)/d,1),e=1-Math.pow(1-p,3);el.textContent=(t*e).toFixed(dc).replace('.',',')+sf;if(p<1)requestAnimationFrame(st);}requestAnimationFrame(st);}
-  var co=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){ac(e.target);co.unobserve(e.target);}});},{threshold:.5});
-  document.querySelectorAll('.num[data-count]').forEach(function(el){co.observe(el);});
-  var sticky=document.getElementById('stickyCta'),contact=document.getElementById('contact');
-  window.addEventListener('scroll',function(){var past=window.scrollY>700,atForm=contact&&contact.getBoundingClientRect().top<window.innerHeight;if(past&&!atForm)sticky.classList.add('show');else sticky.classList.remove('show');},{passive:true});
-  document.querySelectorAll('.faq-q').forEach(function(b){b.addEventListener('click',function(){var it=b.parentElement,a=it.querySelector('.faq-a'),o=it.classList.toggle('open');a.style.maxHeight=o?(a.scrollHeight+'px'):null;});});
-})();
-</script>`;
-}
+  var h=document.getElementById('hdr');
+  if(h){addEventListener('scroll',function(){h.classList.toggle('scrolled',scrollY>40)},{passive:true});}
+  var t=document.getElementById('navToggle'),m=document.getElementById('mobielmenu');
+  if(t&&m){t.addEventListener('click',function(){var o=m.classList.toggle('open');t.classList.toggle('open',o);document.body.classList.toggle('no-scroll',o)});
+  m.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){m.classList.remove('open');t.classList.remove('open');document.body.classList.remove('no-scroll')})});}
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(function(el){io.observe(el)});
+})();`;
 
 // ============================================================
-// TEMPLATE 1 — REDACTIONEEL
+// CONCEPT 1 — NOTTE (editorial): het Calliano-DNA
+// Full-bleed foto-hero · donker/crème ritme · serif met cursief
 // ============================================================
 function editorial(d) {
-  return `${head(d, 'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap')}
-<style>
-:root{--accent:${d.accent};--deep:${d.accentDeep};--tint:${d.tint};--ink:#1a1815;--soft:#57514a;--line:rgba(0,0,0,.1);--paper:#fbfaf7}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1180px;margin:0 auto;padding:0 40px}
-h1,h2,h3{font-family:'Fraunces',serif;font-weight:300;line-height:1.08;letter-spacing:-.01em}
-nav{position:sticky;top:0;z-index:50;background:rgba(251,250,247,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-.nav-in{display:flex;justify-content:space-between;align-items:center;height:74px;max-width:1180px;margin:0 auto;padding:0 40px}
-.brand{font-family:'Fraunces';font-size:23px}
-.nav-r{display:flex;align-items:center;gap:24px}
-.nav-r a.tel{color:var(--ink);text-decoration:none;font-weight:500;font-size:15px}
-.nav-cta{background:var(--accent);color:#fff;padding:11px 22px;font-size:14px;text-decoration:none;transition:.2s}
-.nav-cta:hover{background:var(--deep)}
-header{padding:72px 0 0}
-.hero{display:grid;grid-template-columns:1.25fr 1fr;gap:56px;align-items:center}
-.eyebrow{font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--deep);margin-bottom:22px}
-h1{font-size:clamp(44px,6.2vw,66px)}
-h1 em{font-style:italic;color:var(--accent)}
-.hero .sub{font-size:19px;color:var(--soft);margin-top:24px;max-width:42ch}
-.cta-row{margin-top:34px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
-.btn{background:var(--ink);color:#fff;padding:16px 32px;font-size:15px;text-decoration:none;transition:.2s}
-.btn:hover{background:var(--accent)}
-.btn-link{color:var(--ink);text-decoration:none;font-size:15px;border-bottom:1px solid var(--ink);padding-bottom:3px}
-.hero-img{aspect-ratio:4/5;${bg(d.fotos.hero, d.accentDeep)}}
-.usps{border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:64px;display:grid;grid-template-columns:repeat(3,1fr)}
-.usps div{padding:22px 40px 22px 0;font-size:15px;font-weight:500;display:flex;align-items:center;gap:12px}
-.usps div+div{padding-left:40px;border-left:1px solid var(--line)}
-.usps .mk{color:var(--accent);font-size:18px}
-section{padding:88px 0}
-.lab{font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--deep);margin-bottom:14px}
-.sec-h{font-size:clamp(30px,4vw,44px);max-width:22ch;margin-bottom:44px}
-/* probleem */
-.problem{background:var(--tint)}
-.prob-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:8px}
-.prob{background:var(--paper);padding:30px 26px;border-top:3px solid var(--accent)}
-.prob p{font-size:16px;color:var(--ink)}
-/* gids */
-.guide .wrap{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
-.guide .emp{font-family:'Fraunces';font-size:clamp(26px,3.2vw,36px);line-height:1.25}
-.guide .aut{margin-top:20px;font-size:17px;color:var(--soft)}
-.guide blockquote{background:var(--ink);color:var(--paper);padding:36px;font-family:'Fraunces';font-weight:300;font-size:22px;line-height:1.35}
-.guide cite{display:block;margin-top:20px;font-style:normal;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
-/* plan */
-.plan{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}
-.plan .st{padding:34px 28px 34px 0}
-.plan .st+.st{padding-left:28px;border-left:1px solid var(--line)}
-.plan .n{font-family:'Fraunces';font-size:34px;font-style:italic;color:var(--accent)}
-.plan h3{font-size:22px;margin:16px 0 8px}
-.plan p{font-size:15px;color:var(--soft)}
-/* diensten */
-.svc{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--line);border:1px solid var(--line)}
-.svc-item{background:var(--paper);padding:30px 26px}
-.svc-item h3{font-size:21px;margin-bottom:8px}
-.svc-item p{font-size:15px;color:var(--soft)}
-/* succes */
-.success{background:var(--ink);color:var(--paper)}
-.success .sec-h{color:var(--paper)}
-.succ-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:30px}
-.succ div{display:flex;gap:14px;align-items:flex-start;font-size:17px}
-.succ .mk{color:var(--accent);font-size:20px;flex-shrink:0}
-/* fotoband */
-.band-imgs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px}
-.band-imgs div{height:280px}
-.band-imgs .a{${bg(d.fotos.a, d.accentDeep)}}.band-imgs .b{${bg(d.fotos.b, d.accentDeep)}}.band-imgs .c{${bg(d.fotos.c, d.accentDeep)}}
-/* cta */
-.form{background:var(--tint)}
-.form .wrap{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
-.form h2{font-size:clamp(30px,4vw,46px)}
-.form h2 em{font-style:italic;color:var(--accent)}
-.reassure{margin-top:20px;display:flex;flex-direction:column;gap:10px}
-.reassure span{display:flex;gap:10px;align-items:center;font-size:15px;color:var(--soft)}
-.reassure .mk{color:var(--accent)}
-.card{background:#fff;padding:36px;box-shadow:0 30px 60px -40px rgba(0,0,0,.4)}
-.field{margin-bottom:18px}
-.field label{display:block;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);margin-bottom:7px}
-.field input,.field textarea{width:100%;border:1px solid var(--line);background:#fff;padding:13px 15px;font-family:inherit;font-size:16px}
-.field input:focus,.field textarea:focus{outline:none;border-color:var(--accent)}
-.form button{width:100%;background:var(--ink);color:#fff;border:none;padding:16px;font-size:15px;cursor:pointer;transition:.2s}
-.form button:hover{background:var(--accent)}
-.mini{text-align:center;font-size:13px;color:var(--soft);margin-top:14px}
-footer{background:var(--ink);color:var(--paper);padding:30px 0 96px}
-footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:13px;color:#b8b1a6}
-.svc-item .ic{width:46px;height:46px;border-radius:10px;background:var(--tint);color:var(--accent);display:grid;place-items:center;margin-bottom:16px}
-.svc-item .ic svg{width:22px;height:22px}
-${wowCss()}
-@media(max-width:840px){.hero,.usps,.prob-grid,.guide .wrap,.plan,.svc,.succ-grid,.band-imgs,.form .wrap{grid-template-columns:1fr}.usps div+div,.plan .st+.st{border-left:none;padding-left:0}.hero-img{aspect-ratio:16/10}.band-imgs div{height:220px}section{padding:60px 0}}
+  const [k1, k2] = splitKop(d.oneliner);
+  return `${headTag(d, 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Figtree:wght@400;500;600;700&display=swap', '#121410')}
+<style>${RESET}
+:root{--acc:${d.accent};--deep:${d.accentDeep};--bg:#14150f;--bg2:#191b12;--card:#1b1d13;--txt:#efecdf;--mut:rgba(239,236,223,.7);--crema:#f4efe3;--ink:#1b1d14;--inkmut:rgba(27,29,20,.7);--ld:rgba(239,236,223,.12);--ll:rgba(27,29,20,.18)}
+body{background:var(--bg);color:var(--txt);font-family:'Figtree',system-ui,sans-serif;font-size:1.0625rem;line-height:1.65}
+h1,h2,h3{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;line-height:1.08;margin:0 0 .6em}
+.container{width:min(1160px,92vw);margin-inline:auto}
+.section{padding-block:clamp(4.2rem,8.5vw,7rem)}
+.cream{background:var(--crema);color:var(--ink)}
+.kicker{display:inline-flex;align-items:center;gap:.55rem;font-size:.78rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--acc);margin:0 0 1rem}
+.kicker::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--acc)}
+.h-xl{font-size:clamp(2.1rem,4.4vw,3.2rem)}
+h2 em{font-style:italic;color:var(--acc)}
+.cream h2 em{color:var(--deep)}
+.lead{font-size:clamp(1.02rem,1.6vw,1.18rem);color:var(--mut);max-width:38rem}
+.cream .lead{color:var(--inkmut)}
+.sec-head{max-width:46rem;margin-bottom:2.5rem}
+.btn{display:inline-flex;align-items:center;gap:.55rem;padding:.95rem 1.7rem;border-radius:999px;border:1px solid transparent;font-weight:600;font-size:1rem;cursor:pointer;font-family:inherit;transition:.3s}
+.btn svg{width:18px;height:18px}
+.btn-p{background:var(--acc);color:#14140f}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 14px 34px -10px var(--acc)}
+.btn-g{border-color:var(--ld);color:var(--txt)}
+.btn-g:hover{border-color:var(--acc);color:var(--acc)}
+.cream .btn-g{border-color:var(--ll);color:var(--ink)}
+.site-header{position:fixed;inset:0 0 auto;z-index:60;transition:.35s;border-bottom:1px solid transparent}
+.site-header.scrolled{background:rgba(18,20,14,.9);backdrop-filter:blur(12px);border-color:var(--ld)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-block:.9rem}
+.brand{display:flex;align-items:center;gap:.7rem;font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600}
+.bmark{width:38px;height:38px;border-radius:50%;background:var(--acc);color:#14140f;display:grid;place-items:center;font-weight:700}
+.nav-links{display:none;gap:2rem;list-style:none;margin:0;padding:0}
+.nav-links a{font-size:.97rem;color:var(--mut);transition:.25s}
+.nav-links a:hover{color:var(--acc)}
+.nav-cta{display:none;padding:.7rem 1.3rem;font-size:.95rem}
+.nav-toggle{display:inline-flex;flex-direction:column;gap:5px;background:none;border:0;padding:.5rem;cursor:pointer}
+.nav-toggle span{width:24px;height:2px;background:var(--txt);transition:.3s}
+.nav-toggle.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.nav-toggle.open span:nth-child(2){opacity:0}
+.nav-toggle.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+@media(min-width:900px){.nav-links{display:flex}.nav-cta{display:inline-flex}.nav-toggle{display:none}}
+.mobile-panel{position:fixed;inset:0;z-index:55;background:rgba(14,15,10,.97);display:grid;place-content:center;text-align:center;gap:1.6rem;opacity:0;pointer-events:none;transition:.3s}
+.mobile-panel.open{opacity:1;pointer-events:auto}
+.mobile-panel a{font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--txt)}
+body.no-scroll{overflow:hidden}
+.hero{position:relative;min-height:100svh;display:flex;align-items:flex-end;overflow:hidden;padding-block:8.5rem 3.2rem}
+.hero-bg{position:absolute;inset:0;background:linear-gradient(150deg,#1c1f14,#0e0f0a 70%)}
+.hero-bg img{width:100%;height:100%;object-fit:cover}
+.hero-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(200deg,rgba(14,15,10,.34),rgba(14,15,10,.62) 45%,rgba(14,15,10,.94))}
+.sole{position:absolute;right:-8%;top:5%;width:min(560px,62vw);aspect-ratio:1;border-radius:50%;pointer-events:none;z-index:1;filter:blur(4px);background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--acc) 40%,transparent),transparent 70%)}
+.hero-inner{position:relative;z-index:2;max-width:47rem}
+.hero h1{margin:0 0 1.2rem}
+.hero .it{display:block;font-style:italic;line-height:.98;font-size:clamp(2.9rem,9vw,6rem);color:var(--acc);text-wrap:balance}
+.hero .nl{display:block;font-weight:500;margin-top:.4rem;font-size:clamp(1.7rem,4.6vw,3.1rem)}
+.hero-cta{display:flex;flex-wrap:wrap;gap:.9rem;margin:1.9rem 0 2.3rem}
+.hero-meta{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem 1.1rem;color:var(--mut);font-size:.94rem;border-top:1px solid var(--ld);padding-top:1.4rem}
+.stars{display:inline-flex;gap:2px;color:var(--acc)}
+.stars svg{width:15px;height:15px;fill:currentColor}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--acc);opacity:.7}
+.grid3{display:grid;gap:1.4rem}
+@media(min-width:700px){.grid3{grid-template-columns:repeat(3,1fr)}}
+.pijn{border-top:1px solid var(--ld);padding-top:1.3rem}
+.pijn span{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.5rem;color:var(--acc)}
+.pijn p{margin:.5rem 0 0;color:var(--mut)}
+.dienst{background:var(--card);border:1px solid var(--ld);border-radius:20px;padding:1.9rem 1.7rem;display:flex;flex-direction:column;gap:.55rem;transition:.35s}
+.dienst:hover{transform:translateY(-5px);border-color:var(--acc)}
+.dienst h3{font-size:1.5rem;margin:0}
+.dienst p{color:var(--mut);margin:0;flex:1;font-size:.99rem}
+.dicon{width:48px;height:48px;border-radius:50%;border:1px solid var(--acc);color:var(--acc);display:grid;place-items:center;margin-bottom:.55rem}
+.dicon svg{width:22px;height:22px}
+.alink{display:inline-flex;align-items:center;gap:.5rem;font-weight:600;color:var(--acc);font-size:.97rem}
+.alink svg{width:16px;height:16px;transition:.3s}
+.alink:hover svg{transform:translateX(4px)}
+.over-grid{display:grid;gap:3rem}
+@media(min-width:920px){.over-grid{grid-template-columns:.9fr 1.1fr;gap:4.5rem;align-items:center}}
+.ph{position:relative;overflow:hidden;background:linear-gradient(140deg,#20241a,#12140d)}
+.ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .6s}
+.portrait{position:relative;max-width:440px;margin-top:1.2rem}
+.portrait .ph{border-radius:20px;aspect-ratio:4/5}
+.portrait::after{content:"";position:absolute;inset:0;border:1.5px solid var(--deep);border-radius:20px;transform:translate(16px,16px);z-index:-1}
+.badge{position:absolute;right:-16px;top:-22px;width:110px;height:110px;border-radius:50%;background:var(--deep);color:#fff;display:grid;place-content:center;text-align:center;font-weight:700;font-size:.72rem;line-height:1.15;padding:.6rem;z-index:2;rotate:6deg;box-shadow:0 12px 28px rgba(0,0,0,.22)}
+.badge strong{display:block;font-family:'Cormorant Garamond',serif;font-size:1.7rem;line-height:1;margin-bottom:.15rem}
+@media(max-width:640px){.portrait{margin-right:12px}.badge{right:-6px;top:-16px;width:96px;height:96px}.portrait::after{transform:translate(10px,10px)}}
+.quote{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(1.3rem,2.3vw,1.6rem);line-height:1.3;border-left:3px solid var(--deep);padding-left:1.1rem;margin:1.5rem 0}
+.chips{display:flex;flex-wrap:wrap;gap:.55rem;margin:0 0 1.7rem}
+.chip{font-size:.85rem;font-weight:600;padding:.42rem .95rem;border-radius:999px;border:1px solid var(--ll)}
+.pf-grid{display:grid;gap:1.1rem}
+@media(min-width:640px){.pf-grid{grid-template-columns:repeat(3,1fr)}}
+.pf{position:relative;border-radius:20px;overflow:hidden;border:1px solid var(--ld);margin:0}
+.pf .ph{aspect-ratio:4/5}
+.pf::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,transparent 42%,rgba(10,10,10,.88))}
+.pf figcaption{position:absolute;left:1rem;right:1rem;bottom:1rem;z-index:2;color:#fff}
+.pf-tag{display:block;font-size:.66rem;letter-spacing:.15em;text-transform:uppercase;color:var(--acc);font-weight:700;margin-bottom:.2rem}
+.pf-name{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:600}
+.pf:hover .ph img{transform:scale(1.06)}
+.step{background:var(--card);border:1px solid var(--ld);border-radius:20px;padding:1.8rem 1.6rem}
+.step span{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:2rem;color:var(--acc);line-height:1}
+.step h3{font-size:1.4rem;margin:.7rem 0 .35rem}
+.step p{color:var(--mut);margin:0;font-size:.98rem}
+.rev{background:var(--card);border:1px solid var(--ld);border-radius:20px;padding:1.8rem;display:flex;flex-direction:column;gap:.9rem;transition:.35s}
+.rev:hover{transform:translateY(-4px);border-color:var(--acc)}
+.rev q{font-family:'Cormorant Garamond',serif;font-size:1.25rem;line-height:1.35;flex:1;quotes:'"' '"'}
+.rev cite{font-size:.9rem;color:var(--mut);font-weight:600;font-style:normal}
+.faq-list{max-width:48rem}
+.faq{border-bottom:1px solid var(--ll)}
+.faq:first-of-type{border-top:1px solid var(--ll)}
+.faq summary{display:flex;justify-content:space-between;align-items:center;gap:1rem;cursor:pointer;list-style:none;padding:1.2rem 0;font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600}
+.faq summary::-webkit-details-marker{display:none}
+.faq .plus{flex:none;width:30px;height:30px;border-radius:50%;border:1px solid var(--ll);display:grid;place-items:center;color:var(--deep);transition:.3s}
+.faq .plus svg{width:14px;height:14px}
+.faq[open] .plus{transform:rotate(45deg);background:var(--deep);color:#fff;border-color:var(--deep)}
+.faq-a{padding:0 3rem 1.3rem 0;color:var(--inkmut)}
+.contact-grid{display:grid;gap:3rem}
+@media(min-width:980px){.contact-grid{grid-template-columns:1fr 1.05fr;gap:4.5rem;align-items:start}}
+.irow{display:flex;gap:.95rem;align-items:flex-start;margin-bottom:1.1rem}
+.iicn{width:40px;height:40px;flex:none;border-radius:50%;border:1px solid var(--acc);color:var(--acc);display:grid;place-items:center}
+.iicn svg{width:18px;height:18px}
+.irow strong{display:block;font-size:.72rem;letter-spacing:.13em;text-transform:uppercase;color:var(--mut);font-weight:600}
+.fcard{background:#fbf7ec;color:#1b1d14;border-radius:24px;padding:clamp(1.5rem,3vw,2.3rem);box-shadow:0 30px 70px rgba(0,0,0,.28)}
+.fcard h3{font-size:1.6rem;margin-bottom:1.2rem}
+.fgrid{display:grid;gap:1rem}
+@media(min-width:640px){.fgrid{grid-template-columns:1fr 1fr}.sp2{grid-column:1/-1}}
+.fcard label{display:block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(27,29,20,.6);margin-bottom:.4rem}
+.fcard input,.fcard textarea{width:100%;padding:.85rem 1rem;border:1px solid rgba(0,0,0,.16);border-radius:12px;background:#fff;font:inherit}
+.fcard textarea{min-height:110px;resize:vertical}
+.fnote{font-size:.85rem;color:rgba(27,29,20,.6);margin:.9rem 0 0}
+.site-footer{background:#0c0d08;border-top:1px solid var(--ld);padding:3.2rem 0 2rem;color:rgba(239,236,223,.75)}
+.f-in{display:flex;flex-wrap:wrap;justify-content:space-between;gap:1.6rem}
+.f-tag{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.15rem;color:var(--acc);margin:.7rem 0 0;max-width:22rem}
+.f-r{display:grid;gap:.4rem;text-align:right;font-size:.95rem}
+.f-mini{opacity:.55;font-size:.82rem}
+@media(max-width:640px){.f-r{text-align:left}}
 </style></head><body>
-<nav><div class="nav-in"><div class="brand">${esc(d.bedrijf)}</div><div class="nav-r"><a class="tel" href="tel:${tel(d)}">${tel(d)}</a><a href="#contact" class="nav-cta">${esc(d.directe_cta)}</a></div></div></nav>
-<!-- HELD -->
-<header><div class="wrap"><div class="hero">
-<div><div class="eyebrow">${esc(d.label)}</div><h1>${esc(d.oneliner)}</h1><p class="sub">${esc(d.subkop)}</p>
-<div class="cta-row"><a href="#contact" class="btn">${esc(d.directe_cta)}</a><a href="#werk" class="btn-link">${esc(d.transitionele_cta)} →</a></div></div>
-<div class="hero-img"></div></div>
-<div class="usps">${d.usps.map(u => `<div><span class="mk">✦</span>${esc(u)}</div>`).join('')}</div>
+<header class="site-header" id="hdr"><div class="container nav">
+<a class="brand" href="#top"><span class="bmark">${esc(d.bedrijf[0])}</span>${esc(d.bedrijf)}</a>
+<ul class="nav-links"><li><a href="#diensten">Diensten</a></li><li><a href="#werk">Ons werk</a></li><li><a href="#over">Over ons</a></li><li><a href="#contact">Contact</a></li></ul>
+<a class="btn btn-p nav-cta" href="#contact">${esc(d.directe_cta)}</a>
+<button class="nav-toggle" id="navToggle" aria-label="Menu"><span></span><span></span><span></span></button>
 </div></header>
-<!-- PROBLEEM -->
-<section class="problem"><div class="wrap reveal"><div class="lab">Het probleem</div><h2 class="sec-h">${esc(d.probleem_titel)}</h2>
-<div class="prob-grid">${d.probleem_punten.map(p => `<div class="prob"><p>${esc(p)}</p></div>`).join('')}</div></div></section>
-<!-- GIDS -->
-<section class="guide"><div class="wrap reveal">
-<div><div class="lab">U staat er niet alleen voor</div><div class="emp">${esc(d.gids_empathie)}</div><p class="aut">${esc(d.gids_autoriteit)}</p></div>
-<blockquote>"${esc(d.reviews[0][0])}"<cite>— ${esc(d.reviews[0][1])}, tevreden klant</cite></blockquote>
+<nav class="mobile-panel" id="mobielmenu"><a href="#diensten">Diensten</a><a href="#werk">Ons werk</a><a href="#over">Over ons</a><a href="#contact">Contact</a><a class="btn btn-p" href="#contact">${esc(d.directe_cta)}</a></nav>
+<main>
+<section class="hero" id="top">
+<div class="hero-bg">${img(d.fotos.hero)}</div><div class="sole"></div>
+<div class="container hero-inner">
+<p class="kicker fx fx-1">${esc(d.label)}</p>
+<h1><span class="it fx fx-2">${esc(k1)}</span>${k2 ? `<span class="nl fx fx-3">${esc(k2)}</span>` : ''}</h1>
+<p class="lead fx fx-4">${esc(d.subkop)}</p>
+<div class="hero-cta fx fx-4"><a class="btn btn-p" href="#contact">${esc(d.directe_cta)} ${ARROW}</a><a class="btn btn-g" href="#werk">${esc(d.transitionele_cta)}</a></div>
+<div class="hero-meta fx fx-5">${STARS}${d.usps.map(u => `<span class="dot"></span><span>${esc(u)}</span>`).join('')}</div>
 </div></section>
-<!-- PLAN -->
-<section style="padding-top:0"><div class="wrap reveal"><div class="lab">Zo werkt het</div><h2 class="sec-h">In drie stappen geregeld.</h2>
-<div class="plan">${d.plan.map((s, i) => `<div class="st"><div class="n">0${i + 1}</div><h3>${esc(s.stap)}</h3><p>${esc(s.uitleg)}</p></div>`).join('')}</div></div></section>
-<!-- WAT WE DOEN -->
-<section id="werk" style="padding-top:0"><div class="wrap reveal"><div class="lab">Wat we doen</div><h2 class="sec-h">Vakwerk waar u op kunt bouwen.</h2>
-<div class="svc">${d.diensten.map((s, i) => `<div class="svc-item"><div class="ic">${icon(i)}</div><h3>${esc(s.t)}</h3><p>${esc(s.d)}</p></div>`).join('')}</div></div></section>
-<div class="band-imgs"><div class="a"></div><div class="b"></div><div class="c"></div></div>
-<!-- SUCCES -->
-<section class="success"><div class="wrap reveal"><div class="lab">Het resultaat</div><h2 class="sec-h">Zo voelt het straks.</h2>
-<div class="succ-grid">${d.succes_punten.map(p => `<div class="succ"><span class="mk">✦</span><span>${esc(p)}</span></div>`).join('')}</div></div></section>
-${faqSection(d, 'problem')}
-<!-- DIRECTE CTA -->
-<div class="form" id="contact"><div class="wrap reveal" style="padding:88px 40px">
-<div><div class="lab">Vrijblijvend</div><h2>${esc(d.directe_cta)} <em>vandaag</em>.</h2>
-<div class="reassure"><span><span class="mk">✦</span>Gratis en vrijblijvend</span><span><span class="mk">✦</span>Reactie binnen 24 uur</span><span><span class="mk">✦</span>Persoonlijk contact, geen callcenter</span></div></div>
-<div class="card"><div class="field"><label>Naam</label><input placeholder="Uw naam"></div><div class="field"><label>E-mail of telefoon</label><input placeholder="Waarop we u bereiken"></div><div class="field"><label>Uw vraag</label><textarea rows="3" placeholder="Waar kunnen we mee helpen?"></textarea></div><button>${esc(d.directe_cta)}</button><div class="mini">We nemen meestal dezelfde dag nog contact op.</div></div>
+<section class="section" style="background:var(--bg2)"><div class="container">
+<div class="sec-head reveal"><p class="kicker">Herkenbaar?</p><h2 class="h-xl">${esc(d.probleem_titel)}</h2></div>
+<div class="grid3">${d.probleem_punten.map((p, i) => `<div class="pijn reveal d${i + 1}"><span>${String(i + 1).padStart(2, '0')}</span><p>${esc(p)}</p></div>`).join('')}</div>
+</div></section>
+<section class="section" id="diensten"><div class="container">
+<div class="sec-head reveal"><p class="kicker">Onze diensten</p><h2 class="h-xl">Vakwerk, van begin tot <em>eind</em></h2></div>
+<div class="grid3">${d.diensten.map((s, i) => `<article class="dienst reveal d${i + 1}"><div class="dicon">${icon(i)}</div><h3>${esc(s.t)}</h3><p>${esc(s.d)}</p><a class="alink" href="#contact">Meer weten ${ARROW}</a></article>`).join('')}</div>
+</div></section>
+<section class="section cream" id="over"><div class="container over-grid">
+<div class="portrait reveal"><span class="badge"><strong>★</strong>vakwerk met aandacht</span><div class="ph">${img(d.fotos.portret, esc(d.bedrijf))}</div></div>
+<div class="reveal d1"><p class="kicker" style="color:var(--deep)">Over ons</p><h2 class="h-xl">Uw partner in <em>${esc(d.label.toLowerCase())}</em></h2>
+<p>${esc(d.gids_empathie)}</p><p style="color:var(--inkmut)">${esc(d.gids_autoriteit)}</p>
+<blockquote class="quote">"${esc(d.succes_punten[0] || '')}"</blockquote>
+<div class="chips">${d.usps.map(u => `<span class="chip">${esc(u)}</span>`).join('')}</div>
+<a class="btn btn-g" href="#contact">${esc(d.transitionele_cta)}</a></div>
+</div></section>
+<section class="section" id="werk"><div class="container">
+<div class="sec-head reveal"><p class="kicker">Ons werk</p><h2 class="h-xl">Werk om trots op te <em>zijn</em></h2><p class="lead">Een indruk van de sfeer waar we voor staan.</p></div>
+<div class="pf-grid">${[d.fotos.a, d.fotos.b, d.fotos.c].map((f, i) => `<figure class="pf reveal d${i + 1}"><div class="ph">${img(f)}</div><figcaption><span class="pf-tag">Sfeerbeeld</span><span class="pf-name">${esc((d.diensten[i] || d.diensten[0]).t)}</span></figcaption></figure>`).join('')}</div>
+</div></section>
+<section class="section" style="background:var(--bg2)"><div class="container">
+<div class="sec-head reveal"><p class="kicker">Zo werken we</p><h2 class="h-xl">In drie stappen <em>geregeld</em></h2></div>
+<div class="grid3">${d.plan.map((s, i) => `<div class="step reveal d${i + 1}"><span>0${i + 1}</span><h3>${esc(s.stap)}</h3><p>${esc(s.uitleg)}</p></div>`).join('')}</div>
+</div></section>
+<section class="section"><div class="container">
+<div class="sec-head reveal"><p class="kicker">Ervaringen</p><h2 class="h-xl">Wat klanten <em>zeggen</em></h2></div>
+<div class="grid3">${d.reviews.map((r, i) => `<article class="rev reveal d${i + 1}">${STARS}<q>${esc(r[0])}</q><cite>${esc(r[1])}</cite></article>`).join('')}</div>
+</div></section>
+${d.faq && d.faq.length ? `<section class="section cream"><div class="container">
+<div class="sec-head reveal"><p class="kicker" style="color:var(--deep)">Veelgestelde vragen</p><h2 class="h-xl">Goed om te <em>weten</em></h2></div>
+<div class="faq-list reveal d1">${d.faq.map(f => `<details class="faq"><summary>${esc(f.v)}<span class="plus">${PLUS}</span></summary><div class="faq-a"><p>${esc(f.a)}</p></div></details>`).join('')}</div>
+</div></section>` : ''}
+<section class="section" id="contact"><div class="container contact-grid">
+<div class="reveal"><p class="kicker">Contact</p><h2 class="h-xl">${esc(d.directe_cta)} <em>vandaag</em></h2>
+<p class="lead">Gratis en vrijblijvend. We reageren binnen 24 uur.</p>
+<div style="margin-top:1.6rem">
+<div class="irow"><span class="iicn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.78.66 2.62a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.46-1.23a2 2 0 0 1 2.11-.45c.84.32 1.72.54 2.62.66A2 2 0 0 1 22 16.92z"/></svg></span><div><strong>Bel ons</strong><a href="tel:${tel(d)}">${tel(d)}</a></div></div>
+<div class="irow"><span class="iicn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span><div><strong>Mail ons</strong><a href="mailto:${mail(d)}">${mail(d)}</a></div></div>
 </div></div>
-<footer><div class="wrap"><span>${esc(d.bedrijf)}</span><span>${mail(d)} · ${tel(d)}</span></div></footer>
-${stickyCta(d)}
-${wowJs()}
+<div class="fcard reveal d1"><h3>Vraag vrijblijvend aan</h3>
+<div class="fgrid"><div><label>Naam</label><input placeholder="Uw naam"></div><div><label>Telefoon of e-mail</label><input placeholder="Waarop we u bereiken"></div><div class="sp2"><label>Uw vraag</label><textarea placeholder="Waar kunnen we mee helpen?"></textarea></div><div class="sp2"><button class="btn btn-p" type="button" style="width:100%;justify-content:center">${esc(d.directe_cta)}</button></div></div>
+<p class="fnote">We nemen meestal dezelfde dag nog contact op.</p></div>
+</div></section>
+</main>
+<footer class="site-footer"><div class="container f-in"><div><span style="font-family:'Cormorant Garamond',serif;font-size:1.3rem">${esc(d.bedrijf)}</span><p class="f-tag">"${esc(d.oneliner)}"</p></div><div class="f-r"><span>${mail(d)} · ${tel(d)}</span><span class="f-mini">Conceptontwerp door ClickCurve</span></div></div></footer>
+<script>${NAV_REVEAL_JS}</script>
 </body></html>`;
 }
 
 // ============================================================
-// TEMPLATE 2 — HELDER
+// CONCEPT 2 — ATELIER (vriendelijk): licht editorial
+// Split-hero (tekst | staande foto) · genummerde dienstenlijst ·
+// foto-mozaïek · groot citaat · dunne lijnen · veel witruimte
 // ============================================================
 function vriendelijk(d) {
-  return `${head(d, 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap')}
-<style>
-:root{--accent:${d.accent};--deep:${d.accentDeep};--tint:${d.tint};--ink:#241f1a;--soft:#6b6356}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#fff;color:var(--ink);font-family:'Inter',sans-serif;font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1140px;margin:0 auto;padding:0 32px}
-h1,h2,h3{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;line-height:1.08;letter-spacing:-.02em}
-nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid #eee}
-.nav-in{display:flex;justify-content:space-between;align-items:center;height:72px;max-width:1140px;margin:0 auto;padding:0 32px}
-.brand{display:flex;align-items:center;gap:11px;font-family:'Bricolage Grotesque';font-weight:800;font-size:19px}
-.dot{width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700}
-.nav-r{display:flex;align-items:center;gap:18px}
-.nav-r .tel{color:var(--ink);text-decoration:none;font-weight:600;font-size:15px}
-.nav-cta{background:var(--accent);color:#fff;padding:11px 22px;border-radius:100px;font-weight:600;font-size:14px;text-decoration:none}
-header{display:grid;grid-template-columns:1.05fr 1fr;gap:48px;align-items:center;padding:52px 32px 60px;max-width:1140px;margin:0 auto}
-.rating{display:inline-flex;align-items:center;gap:10px;background:var(--tint);padding:8px 16px;border-radius:100px;font-size:14px;font-weight:600;margin-bottom:22px}
-.rating .st{color:var(--accent)}
-h1{font-size:clamp(40px,5.6vw,56px)}
-header .sub{font-size:19px;color:var(--soft);margin-top:18px;max-width:36ch}
-.actions{margin-top:30px;display:flex;gap:12px;flex-wrap:wrap}
-.btn{padding:15px 28px;border-radius:100px;font-size:15px;font-weight:600;text-decoration:none;transition:.2s}
-.btn-fill{background:var(--accent);color:#fff}.btn-fill:hover{background:var(--deep)}
-.btn-out{border:2px solid var(--accent);color:var(--deep)}
-.assure{margin-top:22px;display:flex;gap:22px;flex-wrap:wrap;font-size:14px;color:var(--soft)}
-.assure b{color:var(--ink)}
-.hero-img{width:100%;aspect-ratio:4/5;border-radius:24px;box-shadow:0 30px 60px -34px rgba(0,0,0,.4);${bg(d.fotos.hero, d.accentDeep)}}
-section{padding:58px 0}
-.lab{text-align:center;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
-.sec-h{text-align:center;font-size:clamp(28px,4vw,40px);margin-bottom:8px}
-.sec-s{text-align:center;color:var(--soft);margin-bottom:38px}
-/* probleem */
-.problem{background:var(--tint)}
-.prob-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.prob{background:#fff;border-radius:18px;padding:26px;display:flex;gap:14px;align-items:flex-start}
-.prob .x{width:30px;height:30px;border-radius:50%;background:var(--tint);color:var(--accent);display:grid;place-items:center;font-weight:700;flex-shrink:0}
-.prob p{font-size:15px}
-/* gids */
-.guide .wrap{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center}
-.guide .emp{font-size:clamp(24px,3vw,32px);font-weight:700;line-height:1.2;letter-spacing:-.02em}
-.guide .aut{margin-top:16px;font-size:17px;color:var(--soft)}
-.guide .qbox{background:var(--tint);border-radius:20px;padding:32px}
-.guide .st{color:var(--accent);margin-bottom:12px}
-.guide blockquote{font-size:19px;line-height:1.4}
-.guide cite{display:block;margin-top:16px;font-style:normal;font-weight:700;font-size:14px}
-/* plan */
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;counter-reset:s}
-.step{background:#fff;border:1px solid #eee;border-radius:20px;padding:30px 26px;position:relative}
-.step .n{width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-family:'Bricolage Grotesque';font-weight:800;font-size:19px;margin-bottom:16px}
-.step h3{font-size:20px;margin-bottom:8px}
-.step p{font-size:15px;color:var(--soft)}
-/* diensten + gallery */
-.band{background:var(--tint);padding:56px 0}
-.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.card{background:#fff;border-radius:20px;padding:30px 26px;transition:.2s}
-.card:hover{transform:translateY(-4px);box-shadow:0 20px 40px -26px rgba(0,0,0,.35)}
-.card .ic{width:50px;height:50px;border-radius:14px;background:var(--tint);display:grid;place-items:center;font-size:22px;color:var(--accent);font-weight:700;margin-bottom:16px}
-.card h3{font-size:20px;margin-bottom:8px}
-.card p{font-size:15px;color:var(--soft)}
-.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.gallery div{height:210px;border-radius:18px}
-.gallery .a{${bg(d.fotos.a, d.accentDeep)}}.gallery .b{${bg(d.fotos.b, d.accentDeep)}}.gallery .c{${bg(d.fotos.c, d.accentDeep)}}
-/* succes */
-.success .succ{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.success .s{background:var(--tint);border-radius:18px;padding:26px;display:flex;gap:12px;align-items:flex-start}
-.success .ck{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700;flex-shrink:0}
-.success .s p{font-size:15px}
-/* reviews */
-.revs{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.rev{background:var(--tint);border-radius:18px;padding:26px}
-.rev .st{color:var(--accent);font-size:15px;margin-bottom:10px}
-.rev p{font-size:15px}
-.rev .who{margin-top:16px;display:flex;align-items:center;gap:11px}
-.rev .av{width:38px;height:38px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px}
-.rev b{font-size:14px}
-/* cta */
-.form{background:var(--deep);color:#fff;padding:64px 0}
-.form .wrap{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center}
-.form h2{color:#fff;font-size:clamp(28px,4vw,42px);text-align:left}
-.form .sub{color:rgba(255,255,255,.82);margin-top:14px;max-width:32ch}
-.checks{margin-top:22px;display:flex;flex-direction:column;gap:10px}
-.checks span{display:flex;gap:10px;align-items:center;font-size:15px;color:rgba(255,255,255,.92)}
-.checks .ck{width:22px;height:22px;border-radius:50%;background:var(--accent);display:grid;place-items:center;font-size:12px;font-weight:700;flex-shrink:0}
-.fcard{background:#fff;border-radius:22px;padding:34px}
-.field{margin-bottom:16px}
-.field label{display:block;color:var(--ink);font-size:13px;font-weight:600;margin-bottom:7px}
-.field input,.field textarea{width:100%;border:1.5px solid #e6ddd2;border-radius:12px;padding:13px 16px;font-family:inherit;font-size:16px;color:var(--ink)}
-.field input:focus,.field textarea:focus{outline:none;border-color:var(--accent)}
-.fcard button{width:100%;background:var(--accent);color:#fff;border:none;padding:15px;border-radius:100px;font-size:15px;font-weight:600;cursor:pointer}
-.fmini{text-align:center;color:var(--soft);font-size:13px;margin-top:12px}
-footer{background:#1a1612;color:rgba(255,255,255,.7);text-align:center;padding:30px 32px 96px;font-size:14px}
-.card .ic svg{width:24px;height:24px}
-${wowCss()}
-@media(max-width:840px){header,.prob-grid,.guide .wrap,.steps,.cards,.gallery,.success .succ,.revs,.form .wrap{grid-template-columns:1fr}}
+  return `${headTag(d, 'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&display=swap', '#FBF8F1')}
+<style>${RESET}
+:root{--acc:${d.accentDeep};--soft:${d.accent};--tint:${d.tint};--bg:#fbf8f1;--txt:#26221b;--mut:rgba(38,34,27,.64);--line:rgba(38,34,27,.16)}
+body{background:var(--bg);color:var(--txt);font-family:'Inter',system-ui,sans-serif;font-size:1.04rem;line-height:1.7}
+h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:500;line-height:1.12;margin:0 0 .6em}
+em{font-style:italic;color:var(--acc)}
+.wrap{width:min(1120px,90vw);margin-inline:auto}
+.section{padding-block:clamp(4rem,8vw,6.8rem)}
+.kick{font-size:.75rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--acc);display:inline-flex;align-items:center;gap:.7rem;margin:0 0 1.1rem}
+.kick::before{content:"";width:26px;height:1px;background:var(--acc)}
+.btn{display:inline-flex;align-items:center;gap:.55rem;padding:.9rem 1.6rem;border-radius:12px;border:1px solid transparent;font-weight:600;font-size:.98rem;cursor:pointer;font-family:inherit;transition:.3s}
+.btn svg{width:17px;height:17px}
+.btn-p{background:var(--acc);color:#fffdf8}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 14px 30px -12px var(--acc)}
+.btn-g{border-color:var(--line);color:var(--txt)}
+.btn-g:hover{border-color:var(--acc);color:var(--acc)}
+.topbar{position:fixed;inset:0 0 auto;z-index:60;background:rgba(251,248,241,.92);backdrop-filter:blur(10px);border-bottom:1px solid transparent;transition:.3s}
+.topbar.scrolled{border-color:var(--line)}
+.nav{display:flex;align-items:center;justify-content:space-between;padding-block:1rem}
+.brand{font-family:'Fraunces',serif;font-size:1.35rem;font-weight:600}
+.brand em{color:var(--acc)}
+.nav-links{display:none;gap:2.1rem;list-style:none;margin:0;padding:0}
+.nav-links a{font-size:.95rem;color:var(--mut);transition:.25s}
+.nav-links a:hover{color:var(--acc)}
+.nav-cta{display:none}
+.nav-toggle{display:inline-flex;flex-direction:column;gap:5px;background:none;border:0;padding:.5rem;cursor:pointer}
+.nav-toggle span{width:24px;height:2px;background:var(--txt);transition:.3s}
+.nav-toggle.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.nav-toggle.open span:nth-child(2){opacity:0}
+.nav-toggle.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+@media(min-width:900px){.nav-links{display:flex}.nav-cta{display:inline-flex}.nav-toggle{display:none}}
+.mobile-panel{position:fixed;inset:0;z-index:55;background:rgba(251,248,241,.98);display:grid;place-content:center;text-align:center;gap:1.5rem;opacity:0;pointer-events:none;transition:.3s}
+.mobile-panel.open{opacity:1;pointer-events:auto}
+.mobile-panel a{font-family:'Fraunces',serif;font-size:1.9rem}
+body.no-scroll{overflow:hidden}
+/* split-hero */
+.hero{padding-top:7.2rem;padding-bottom:clamp(3rem,6vw,5rem)}
+.hero-grid{display:grid;gap:2.6rem;align-items:center}
+@media(min-width:940px){.hero-grid{grid-template-columns:1.05fr .95fr;gap:4rem}}
+.hero h1{font-size:clamp(2.5rem,5.6vw,4.2rem);font-weight:500}
+.hero .lead{font-size:clamp(1.05rem,1.5vw,1.2rem);color:var(--mut);max-width:32rem;margin-top:1rem}
+.hero-cta{display:flex;flex-wrap:wrap;gap:.9rem;margin-top:1.9rem}
+.hero-note{display:flex;align-items:center;gap:.8rem;margin-top:2.2rem;color:var(--mut);font-size:.92rem}
+.stars{display:inline-flex;gap:2px;color:var(--soft)}
+.stars svg{width:15px;height:15px;fill:currentColor}
+.hero-foto{position:relative}
+.hero-foto .ph{aspect-ratio:4/5;border-radius:22px;overflow:hidden;position:relative;background:linear-gradient(140deg,#e9e2d2,#d6cfbc)}
+.hero-foto .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hero-foto::before{content:"";position:absolute;inset:auto -14px -14px auto;width:60%;height:60%;border:1px solid var(--soft);border-radius:22px;z-index:-1}
+.hero-usps{position:absolute;left:-14px;bottom:22px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:.9rem 1.1rem;box-shadow:0 18px 40px rgba(38,34,27,.12);display:grid;gap:.35rem;font-size:.88rem}
+.hero-usps span{display:flex;align-items:center;gap:.5rem}
+.hero-usps svg{width:14px;height:14px;color:var(--acc)}
+@media(max-width:640px){.hero-usps{position:static;margin-top:1rem;box-shadow:none}}
+/* groot citaat */
+.cite-band{border-block:1px solid var(--line);padding-block:clamp(2.6rem,5vw,4rem);text-align:center}
+.cite-band p{font-family:'Fraunces',serif;font-style:italic;font-size:clamp(1.4rem,3vw,2.1rem);line-height:1.35;max-width:46rem;margin:0 auto;color:var(--txt)}
+/* pijn + diensten als lijst */
+.split{display:grid;gap:2.6rem}
+@media(min-width:940px){.split{grid-template-columns:.85fr 1.15fr;gap:4.5rem}}
+.pijn-lijst{display:grid;gap:1.1rem;margin-top:.4rem}
+.pijn-lijst div{display:flex;gap:.85rem;color:var(--mut)}
+.pijn-lijst em{font-family:'Fraunces',serif;font-size:1.15rem;color:var(--soft);flex:none}
+.d-lijst{border-top:1px solid var(--line)}
+.d-item{display:grid;grid-template-columns:auto 1fr auto;gap:1.2rem;align-items:baseline;padding:1.5rem 0;border-bottom:1px solid var(--line);transition:.25s}
+.d-item:hover{padding-left:.5rem}
+.d-item .nr{font-family:'Fraunces',serif;font-style:italic;font-size:1.3rem;color:var(--soft)}
+.d-item h3{font-size:1.45rem;margin:0 0 .25rem}
+.d-item p{margin:0;color:var(--mut);font-size:.97rem;max-width:34rem}
+.d-item .alink{align-self:center}
+.alink{display:inline-flex;align-items:center;gap:.45rem;font-weight:600;color:var(--acc);font-size:.94rem}
+.alink svg{width:15px;height:15px;transition:.3s}
+.alink:hover svg{transform:translateX(4px)}
+/* mozaïek */
+.moz{display:grid;gap:1.1rem}
+@media(min-width:760px){.moz{grid-template-columns:1.35fr 1fr;grid-template-rows:1fr 1fr}.moz .groot{grid-row:1/3}}
+.moz figure{position:relative;margin:0;border-radius:20px;overflow:hidden;border:1px solid var(--line)}
+.moz .ph{position:relative;background:linear-gradient(140deg,#e9e2d2,#d6cfbc);height:100%;min-height:230px}
+.moz .groot .ph{min-height:480px}
+.moz .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .6s}
+.moz figure:hover img{transform:scale(1.05)}
+.moz figcaption{position:absolute;left:1rem;bottom:.9rem;background:rgba(251,248,241,.92);backdrop-filter:blur(6px);border-radius:999px;padding:.4rem 1rem;font-size:.85rem;font-weight:600}
+/* over */
+.over{background:var(--tint);border-radius:26px;padding:clamp(2rem,4.5vw,3.6rem);display:grid;gap:2.2rem}
+@media(min-width:860px){.over{grid-template-columns:auto 1fr;gap:3.4rem;align-items:center}}
+.over .ph{width:min(300px,70vw);aspect-ratio:1;border-radius:50%;overflow:hidden;position:relative;background:linear-gradient(140deg,#e9e2d2,#d6cfbc);border:6px solid #fff;box-shadow:0 22px 50px rgba(38,34,27,.16)}
+.over .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.over h2{font-size:clamp(1.8rem,3.4vw,2.6rem)}
+.over .chips{display:flex;flex-wrap:wrap;gap:.5rem;margin:1.2rem 0 0}
+.over .chip{font-size:.84rem;font-weight:600;padding:.4rem .95rem;border-radius:999px;background:#fff;border:1px solid var(--line)}
+/* stappen horizontaal */
+.stappen{display:grid;gap:1.6rem;counter-reset:st}
+@media(min-width:760px){.stappen{grid-template-columns:repeat(3,1fr);gap:2.2rem}}
+.stap{position:relative;padding-top:1.4rem;border-top:2px solid var(--line)}
+.stap::before{counter-increment:st;content:"0" counter(st);position:absolute;top:-0.85rem;left:0;background:var(--bg);padding-right:.7rem;font-family:'Fraunces',serif;font-style:italic;font-size:1.25rem;color:var(--acc)}
+.stap h3{font-size:1.3rem;margin:.2rem 0 .3rem}
+.stap p{margin:0;color:var(--mut);font-size:.96rem}
+/* reviews: 1 groot + 2 klein */
+.rev-groot{max-width:52rem;margin:0 auto 2.2rem;text-align:center}
+.rev-groot q{font-family:'Fraunces',serif;font-style:italic;font-size:clamp(1.3rem,2.6vw,1.8rem);line-height:1.4;quotes:'"' '"'}
+.rev-groot cite{display:block;margin-top:1rem;font-style:normal;font-size:.92rem;color:var(--mut);font-weight:600}
+.rev-rij{display:grid;gap:1.2rem}
+@media(min-width:720px){.rev-rij{grid-template-columns:1fr 1fr}}
+.rev-k{background:#fff;border:1px solid var(--line);border-radius:18px;padding:1.5rem 1.6rem}
+.rev-k q{font-size:1.02rem;quotes:'"' '"'}
+.rev-k cite{display:block;margin-top:.7rem;font-style:normal;font-size:.88rem;color:var(--mut);font-weight:600}
+/* faq */
+.faq-list{max-width:46rem;margin-inline:auto}
+.faq{border-bottom:1px solid var(--line)}
+.faq:first-of-type{border-top:1px solid var(--line)}
+.faq summary{display:flex;justify-content:space-between;align-items:center;gap:1rem;cursor:pointer;list-style:none;padding:1.15rem 0;font-family:'Fraunces',serif;font-size:1.2rem;font-weight:500}
+.faq summary::-webkit-details-marker{display:none}
+.faq .plus{flex:none;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;color:var(--acc);transition:.3s}
+.faq .plus svg{width:13px;height:13px}
+.faq[open] .plus{transform:rotate(45deg);background:var(--acc);color:#fff;border-color:var(--acc)}
+.faq-a{padding:0 3rem 1.2rem 0;color:var(--mut)}
+/* contact */
+.c-kaart{background:#fff;border:1px solid var(--line);border-radius:24px;padding:clamp(1.8rem,4vw,3rem);display:grid;gap:2.4rem;box-shadow:0 26px 60px rgba(38,34,27,.1)}
+@media(min-width:940px){.c-kaart{grid-template-columns:1fr 1.1fr;gap:3.6rem}}
+.fgrid{display:grid;gap:1rem}
+@media(min-width:640px){.fgrid{grid-template-columns:1fr 1fr}.sp2{grid-column:1/-1}}
+.c-kaart label{display:block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:.4rem}
+.c-kaart input,.c-kaart textarea{width:100%;padding:.85rem 1rem;border:1px solid var(--line);border-radius:12px;background:var(--bg);font:inherit}
+.c-kaart textarea{min-height:110px;resize:vertical}
+.c-info a{font-weight:600;color:var(--acc)}
+footer{border-top:1px solid var(--line);padding:2.6rem 0;color:var(--mut);font-size:.94rem}
+.f-in{display:flex;flex-wrap:wrap;justify-content:space-between;gap:1rem}
 </style></head><body>
-<nav><div class="nav-in"><div class="brand"><span class="dot">${esc(d.bedrijf[0])}</span> ${esc(d.bedrijf)}</div><div class="nav-r"><a class="tel" href="tel:${tel(d)}">${tel(d)}</a><a href="#contact" class="nav-cta">${esc(d.directe_cta)}</a></div></div></nav>
-<!-- HELD -->
-<header>
-<div><div class="rating"><span class="st">★★★★★</span> 4,9 · ${esc(d.label)}</div><h1>${esc(d.oneliner)}</h1><p class="sub">${esc(d.subkop)}</p>
-<div class="actions"><a href="#contact" class="btn btn-fill">${esc(d.directe_cta)}</a><a href="#werk" class="btn btn-out">${esc(d.transitionele_cta)}</a></div>
-<div class="assure">${d.usps.map(u => `<span><b>✓</b> ${esc(u)}</span>`).join('')}</div></div>
-<div class="hero-img"></div></header>
-<!-- PROBLEEM -->
-<section class="problem"><div class="wrap reveal"><div class="lab">Het probleem</div><h2 class="sec-h">${esc(d.probleem_titel)}</h2><p class="sec-s">U bent niet de enige. Dit horen we vaak.</p>
-<div class="prob-grid">${d.probleem_punten.map(p => `<div class="prob"><span class="x">!</span><p>${esc(p)}</p></div>`).join('')}</div></div></section>
-<!-- GIDS -->
-<section class="guide"><div class="wrap reveal">
-<div><div class="lab" style="text-align:left">U staat er niet alleen voor</div><div class="emp">${esc(d.gids_empathie)}</div><p class="aut">${esc(d.gids_autoriteit)}</p></div>
-<div class="qbox"><div class="st">★★★★★</div><blockquote>"${esc(d.reviews[0][0])}"</blockquote><cite>${esc(d.reviews[0][1])}</cite></div>
+<header class="topbar" id="hdr"><div class="wrap nav">
+<a class="brand" href="#top">${esc(d.bedrijf)} <em>.</em></a>
+<ul class="nav-links"><li><a href="#diensten">Diensten</a></li><li><a href="#werk">Ons werk</a></li><li><a href="#over">Over ons</a></li><li><a href="#contact">Contact</a></li></ul>
+<a class="btn btn-p nav-cta" href="#contact">${esc(d.directe_cta)}</a>
+<button class="nav-toggle" id="navToggle" aria-label="Menu"><span></span><span></span><span></span></button>
+</div></header>
+<nav class="mobile-panel" id="mobielmenu"><a href="#diensten">Diensten</a><a href="#werk">Ons werk</a><a href="#over">Over ons</a><a href="#contact">Contact</a><a class="btn btn-p" href="#contact">${esc(d.directe_cta)}</a></nav>
+<main id="top">
+<section class="hero"><div class="wrap hero-grid">
+<div>
+<p class="kick fx fx-1">${esc(d.label)}</p>
+<h1 class="fx fx-2">${esc(splitKop(d.oneliner)[0])} <em>${esc(splitKop(d.oneliner)[1] || '')}</em></h1>
+<p class="lead fx fx-3">${esc(d.subkop)}</p>
+<div class="hero-cta fx fx-4"><a class="btn btn-p" href="#contact">${esc(d.directe_cta)} ${ARROW}</a><a class="btn btn-g" href="#werk">${esc(d.transitionele_cta)}</a></div>
+<div class="hero-note fx fx-5">${STARS}<span>Klanten beoordelen ons met 4,9 / 5</span></div>
+</div>
+<div class="hero-foto fx fx-3"><div class="ph">${img(d.fotos.hero)}</div>
+<div class="hero-usps">${d.usps.map(u => `<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>${esc(u)}</span>`).join('')}</div>
+</div>
 </div></section>
-<!-- PLAN -->
-<section><div class="wrap reveal"><div class="lab">Zo werkt het</div><h2 class="sec-h">In drie simpele stappen</h2><p class="sec-s">Geen gedoe, u weet precies waar u aan toe bent.</p>
-<div class="steps">${d.plan.map((s, i) => `<div class="step"><div class="n">${i + 1}</div><h3>${esc(s.stap)}</h3><p>${esc(s.uitleg)}</p></div>`).join('')}</div></div></section>
-<!-- WAT WE DOEN -->
-<div class="band" id="werk"><div class="wrap reveal"><div class="lab">Wat we doen</div><h2 class="sec-h">Waar we goed in zijn</h2><p class="sec-s">Alles in vertrouwde handen, van begin tot eind.</p>
-<div class="cards">${d.diensten.map((s, i) => `<div class="card"><div class="ic">${icon(i)}</div><h3>${esc(s.t)}</h3><p>${esc(s.d)}</p></div>`).join('')}</div>
-<div class="gallery" style="margin-top:24px"><div class="a"></div><div class="b"></div><div class="c"></div></div></div></div>
-<!-- SUCCES -->
-<section class="success"><div class="wrap reveal"><div class="lab">Het resultaat</div><h2 class="sec-h">Zo voelt het straks</h2><p class="sec-s">Dit levert het u op.</p>
-<div class="succ">${d.succes_punten.map(p => `<div class="s"><span class="ck">✓</span><p>${esc(p)}</p></div>`).join('')}</div></div></section>
-<!-- REVIEWS -->
-<section style="padding-top:0"><div class="wrap reveal"><h2 class="sec-h">Wat klanten zeggen</h2><div class="sec-s"></div>
-<div class="revs">${d.reviews.map(r => `<div class="rev"><div class="st">★★★★★</div><p>"${esc(r[0])}"</p><div class="who"><span class="av">${esc(r[1][0])}</span><b>${esc(r[1])}</b></div></div>`).join('')}</div></div></section>
-${faqSection(d, '')}
-<!-- DIRECTE CTA -->
-<div class="form" id="contact"><div class="wrap reveal">
-<div><h2>Benieuwd wat het kost?</h2><p class="sub">Laat uw gegevens achter, dan nemen we snel contact met u op.</p>
-<div class="checks"><span><span class="ck">✓</span>Gratis en vrijblijvend offerte</span><span><span class="ck">✓</span>Reactie binnen 24 uur</span><span><span class="ck">✓</span>Een vast aanspreekpunt</span></div></div>
-<div class="fcard"><div class="field"><label>Uw naam</label><input placeholder="Voor- en achternaam"></div><div class="field"><label>Telefoon of e-mail</label><input placeholder="Waarop we u bereiken"></div><div class="field"><label>Uw vraag</label><textarea rows="3" placeholder="Waar kunnen we mee helpen?"></textarea></div><button>${esc(d.directe_cta)}</button><div class="fmini">Geen verplichtingen. We bellen u terug.</div></div>
-</div></div>
-<footer>${esc(d.bedrijf)} · ${mail(d)} · ${tel(d)}</footer>
-${stickyCta(d)}
-${wowJs()}
+<div class="cite-band reveal"><div class="wrap"><p>"${esc(d.gids_empathie)}"</p></div></div>
+<section class="section" id="diensten"><div class="wrap split">
+<div class="reveal"><p class="kick">Herkenbaar?</p><h2 style="font-size:clamp(1.7rem,3.2vw,2.4rem)">${esc(d.probleem_titel)}</h2>
+<div class="pijn-lijst">${d.probleem_punten.map(p => `<div><em>✳</em><span>${esc(p)}</span></div>`).join('')}</div></div>
+<div class="reveal d1"><p class="kick">Onze diensten</p><h2 style="font-size:clamp(1.7rem,3.2vw,2.4rem)">Waar we u mee <em>helpen</em></h2>
+<div class="d-lijst">${d.diensten.map((s, i) => `<div class="d-item"><span class="nr">0${i + 1}</span><div><h3>${esc(s.t)}</h3><p>${esc(s.d)}</p></div><a class="alink" href="#contact">${ARROW}</a></div>`).join('')}</div></div>
+</div></section>
+<section class="section" id="werk" style="padding-top:0"><div class="wrap">
+<div class="reveal" style="max-width:44rem;margin-bottom:2.2rem"><p class="kick">Ons werk</p><h2 style="font-size:clamp(1.9rem,3.6vw,2.7rem)">Een indruk van de <em>sfeer</em></h2></div>
+<div class="moz">
+<figure class="groot reveal"><div class="ph">${img(d.fotos.a)}</div><figcaption>${esc(d.diensten[0].t)}</figcaption></figure>
+<figure class="reveal d1"><div class="ph">${img(d.fotos.b)}</div><figcaption>${esc((d.diensten[1] || d.diensten[0]).t)}</figcaption></figure>
+<figure class="reveal d2"><div class="ph">${img(d.fotos.c)}</div><figcaption>${esc((d.diensten[2] || d.diensten[0]).t)}</figcaption></figure>
+</div></div></section>
+<section class="section" id="over" style="padding-top:0"><div class="wrap">
+<div class="over reveal">
+<div class="ph">${img(d.fotos.portret, esc(d.bedrijf))}</div>
+<div><p class="kick">Over ons</p><h2>Persoonlijk, betrokken en <em>eerlijk</em></h2>
+<p>${esc(d.gids_autoriteit)}</p>
+<div class="chips">${d.usps.map(u => `<span class="chip">${esc(u)}</span>`).join('')}</div></div>
+</div></div></section>
+<section class="section" style="padding-top:0"><div class="wrap">
+<div class="reveal" style="max-width:44rem;margin-bottom:2.4rem"><p class="kick">Zo werken we</p><h2 style="font-size:clamp(1.9rem,3.6vw,2.7rem)">Van kennismaking tot <em>resultaat</em></h2></div>
+<div class="stappen">${d.plan.map((s, i) => `<div class="stap reveal d${i + 1}"><h3>${esc(s.stap)}</h3><p>${esc(s.uitleg)}</p></div>`).join('')}</div>
+</div></section>
+<section class="section" style="background:#fff;border-block:1px solid var(--line)"><div class="wrap">
+<div class="rev-groot reveal">${STARS}<q>${esc(d.reviews[0][0])}</q><cite>— ${esc(d.reviews[0][1])}</cite></div>
+<div class="rev-rij">${d.reviews.slice(1).map((r, i) => `<div class="rev-k reveal d${i + 1}"><q>${esc(r[0])}</q><cite>— ${esc(r[1])}</cite></div>`).join('')}</div>
+</div></section>
+${d.faq && d.faq.length ? `<section class="section"><div class="wrap">
+<div class="reveal" style="text-align:center;margin-bottom:2rem"><p class="kick" style="justify-content:center">Veelgestelde vragen</p><h2 style="font-size:clamp(1.9rem,3.6vw,2.7rem)">Goed om te <em>weten</em></h2></div>
+<div class="faq-list reveal d1">${d.faq.map(f => `<details class="faq"><summary>${esc(f.v)}<span class="plus">${PLUS}</span></summary><div class="faq-a"><p>${esc(f.a)}</p></div></details>`).join('')}</div>
+</div></section>` : ''}
+<section class="section" id="contact" style="padding-top:0"><div class="wrap">
+<div class="c-kaart reveal">
+<div class="c-info"><p class="kick">Contact</p><h2 style="font-size:clamp(1.8rem,3.4vw,2.5rem)">${esc(d.directe_cta)} <em>vandaag</em></h2>
+<p style="color:var(--mut)">Gratis en vrijblijvend. We reageren binnen 24 uur, persoonlijk en zonder kleine lettertjes.</p>
+<p>Bel <a href="tel:${tel(d)}">${tel(d)}</a><br>of mail <a href="mailto:${mail(d)}">${mail(d)}</a></p></div>
+<div class="fgrid"><div><label>Naam</label><input placeholder="Uw naam"></div><div><label>Telefoon of e-mail</label><input placeholder="Waarop we u bereiken"></div><div class="sp2"><label>Uw vraag</label><textarea placeholder="Waar kunnen we mee helpen?"></textarea></div><div class="sp2"><button class="btn btn-p" type="button" style="width:100%;justify-content:center">${esc(d.directe_cta)}</button></div></div>
+</div></div></section>
+</main>
+<footer><div class="wrap f-in"><span style="font-family:'Fraunces',serif;font-size:1.1rem;color:var(--txt)">${esc(d.bedrijf)}</span><span>${mail(d)} · ${tel(d)}</span><span style="opacity:.6;font-size:.84rem">Conceptontwerp door ClickCurve</span></div></footer>
+<script>${NAV_REVEAL_JS}</script>
 </body></html>`;
 }
 
 // ============================================================
-// TEMPLATE 3 — STATEMENT
-// ============================================================
-function bold(d) {
-  const rev = d.reviews[1] || d.reviews[0];
-  const tick = d.usps.concat(d.usps);
-  return `${head(d, 'https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Space+Grotesk:wght@300;400;500&display=swap')}
-<style>
-:root{--accent:${d.accent};--deep:${d.accentDeep};--bg:#141210;--bg2:#1d1a16;--bone:#f3f0ea;--soft:#a8a092;--line:#2e2a23}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--bone);font-family:'Space Grotesk',sans-serif;font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1200px;margin:0 auto;padding:0 40px}
-h1,h2,h3{font-family:'Syne',sans-serif;font-weight:700;line-height:1.04;letter-spacing:-.02em}
-nav{position:sticky;top:0;z-index:50;background:rgba(20,18,16,.8);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
-.nav-in{display:flex;justify-content:space-between;align-items:center;height:76px;max-width:1200px;margin:0 auto;padding:0 40px}
-.brand{font-family:'Syne';font-weight:800;font-size:19px;letter-spacing:.12em}
-.nav-r{display:flex;align-items:center;gap:20px}
-.nav-r .tel{color:var(--bone);text-decoration:none;font-size:15px}
-.nav-cta{background:var(--accent);color:var(--bg);padding:11px 22px;border-radius:100px;font-weight:700;font-size:13px;text-decoration:none}
-header{padding:84px 0 56px;position:relative;overflow:hidden}
-.glow{position:absolute;top:-25%;right:-12%;width:560px;height:560px;background:radial-gradient(circle,var(--accent),transparent 62%);opacity:.18;pointer-events:none}
-.eyebrow{font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--accent);margin-bottom:24px}
-h1{font-size:clamp(48px,7.8vw,80px);max-width:14ch}
-.hero-foot{margin-top:42px;display:grid;grid-template-columns:1fr auto;gap:30px;align-items:end;border-top:1px solid var(--line);padding-top:30px}
-.hero-foot p{color:var(--soft);font-size:18px;max-width:46ch}
-.hero-foot .ctas{display:flex;gap:14px;flex-wrap:wrap}
-.btn{background:var(--accent);color:var(--bg);padding:16px 32px;border-radius:100px;font-size:14px;font-weight:700;text-decoration:none;white-space:nowrap;transition:.2s}
-.btn:hover{filter:brightness(1.1)}
-.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--bone);padding:16px 28px;border-radius:100px;font-size:14px;text-decoration:none}
-.ticker{border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden;white-space:nowrap;padding:16px 0}
-.tt{display:inline-block;animation:s 22s linear infinite}
-.tt span{font-family:'Syne';font-weight:600;font-size:18px;color:var(--soft);margin:0 26px}
-.tt span b{color:var(--accent)}
-@keyframes s{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.hero-img{height:400px;${bg(d.fotos.hero, d.accentDeep)}}
-section{padding:80px 0}
-.lab{font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
-.sec-h{font-size:clamp(30px,4.4vw,48px);max-width:22ch;margin-bottom:44px}
-/* probleem */
-.prob-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
-.prob{background:var(--bg);padding:38px 32px}
-.prob .x{color:var(--accent);font-size:24px;font-weight:700}
-.prob p{margin-top:16px;color:var(--bone);font-size:16px}
-/* gids */
-.guide{background:var(--bg2)}
-.guide .wrap{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
-.guide .emp{font-size:clamp(26px,3.4vw,38px);line-height:1.2}
-.guide .aut{margin-top:18px;color:var(--soft);font-size:17px}
-.guide blockquote{font-size:22px;line-height:1.4;border-left:3px solid var(--accent);padding-left:26px}
-.guide cite{display:block;margin-top:16px;font-style:normal;font-size:13px;letter-spacing:.14em;color:var(--accent)}
-/* plan */
-.plan{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
-.pstep{border-top:2px solid var(--accent);padding-top:24px}
-.pstep .n{font-family:'Syne';font-weight:800;font-size:15px;color:var(--accent);letter-spacing:.2em}
-.pstep h3{font-size:24px;margin:18px 0 10px}
-.pstep p{color:var(--soft);font-size:15px}
-/* diensten */
-.svc{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
-.svc-item{background:var(--bg);padding:42px 36px;transition:.25s}
-.svc-item:hover{background:var(--bg2)}
-.svc-item .n{font-size:13px;color:var(--accent);letter-spacing:.2em}
-.svc-item h3{font-size:26px;margin:40px 0 12px}
-.svc-item p{color:var(--soft);font-size:15px}
-.duo{display:grid;grid-template-columns:7fr 5fr;gap:16px;margin-top:60px}
-.duo div{height:330px;border-radius:6px}
-.duo .a{${bg(d.fotos.a, d.accentDeep)}}.duo .b{${bg(d.fotos.b, d.accentDeep)}}
-/* succes + stats */
-.success{background:var(--bg2)}
-.succ-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;margin-bottom:50px}
-.succ div{display:flex;gap:13px;align-items:flex-start;font-size:17px}
-.succ .mk{color:var(--accent);font-size:20px;flex-shrink:0}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:36px;text-align:center;border-top:1px solid var(--line);padding-top:44px}
-.stat .num{font-family:'Syne';font-weight:800;font-size:clamp(40px,6vw,58px);color:var(--accent);line-height:1}
-.stat .l{margin-top:10px;color:var(--soft);font-size:14px}
-/* cta */
-.quote{padding:64px 0;text-align:center}
-.quote p{font-size:26px;line-height:1.3;max-width:26ch;margin:0 auto}
-.quote span{display:block;font-size:13px;letter-spacing:.15em;color:var(--accent);margin-top:20px}
-.form{padding:80px 0;background:var(--bg2)}
-.form .wrap{display:grid;grid-template-columns:1.1fr 1fr;gap:60px;align-items:start}
-.form h2{font-size:clamp(36px,5vw,54px)}
-.form h2 span{color:var(--accent)}
-.checks{margin-top:24px;display:flex;flex-direction:column;gap:12px}
-.checks span{display:flex;gap:11px;align-items:center;color:var(--soft);font-size:15px}
-.checks .ck{color:var(--accent);font-weight:700}
-.field{margin-bottom:18px}
-.field label{display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);margin-bottom:8px}
-.field input,.field textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-family:inherit;font-size:16px;color:var(--bone)}
-.field input:focus,.field textarea:focus{outline:none;border-color:var(--accent)}
-.form button{width:100%;background:var(--accent);color:var(--bg);border:none;padding:16px;border-radius:100px;font-family:'Syne';font-weight:700;font-size:16px;cursor:pointer}
-.fmini{text-align:center;color:var(--soft);font-size:13px;margin-top:12px}
-footer{border-top:1px solid var(--line);padding:30px 0 96px}
-footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--soft)}
-.svc-item .ic{color:var(--accent);margin-bottom:8px;display:block}
-.svc-item .ic svg{width:26px;height:26px}
-${wowCss()}
-/* donkere FAQ voor dit thema */
-.faqsec{background:var(--bg2)}
-.faqsec .faq-item{background:var(--bg);border-color:var(--line)}
-.faqsec .faq-q{color:var(--bone)}
-.faqsec .faq-a{color:var(--soft)}
-.faqsec .sec-h{color:var(--bone)}
-@media(max-width:840px){.prob-grid,.guide .wrap,.plan,.svc,.duo,.succ-grid,.stats,.hero-foot,.form .wrap{grid-template-columns:1fr}.duo div{height:240px}section{padding:56px 0}}
-</style></head><body>
-<nav><div class="nav-in"><div class="brand">${esc(d.bedrijf.toUpperCase())}</div><div class="nav-r"><a class="tel" href="tel:${tel(d)}">${tel(d)}</a><a href="#contact" class="nav-cta">${esc(d.directe_cta)}</a></div></div></nav>
-<!-- HELD -->
-<header><div class="wrap"><div class="glow"></div><div class="eyebrow">— ${esc(d.label)}</div><h1>${esc(d.oneliner)}</h1>
-<div class="hero-foot"><p>${esc(d.subkop)}</p><div class="ctas"><a href="#contact" class="btn">${esc(d.directe_cta)} →</a><a href="#werk" class="btn-ghost">${esc(d.transitionele_cta)}</a></div></div></div></header>
-<div class="ticker"><div class="tt">${tick.map(u => `<span>${esc(u)} <b>◆</b></span>`).join('')}</div></div>
-<div class="hero-img"></div>
-<!-- PROBLEEM -->
-<section><div class="wrap reveal"><div class="lab">Het probleem</div><h2 class="sec-h">${esc(d.probleem_titel)}</h2>
-<div class="prob-grid">${d.probleem_punten.map(p => `<div class="prob"><div class="x">!</div><p>${esc(p)}</p></div>`).join('')}</div></div></section>
-<!-- GIDS -->
-<section class="guide"><div class="wrap reveal">
-<div><div class="lab">U staat er niet alleen voor</div><div class="emp">${esc(d.gids_empathie)}</div><p class="aut">${esc(d.gids_autoriteit)}</p></div>
-<blockquote>"${esc(d.reviews[0][0])}"<cite>${esc(d.reviews[0][1].toUpperCase())}</cite></blockquote>
-</div></section>
-<!-- PLAN -->
-<section><div class="wrap reveal"><div class="lab">Zo werkt het</div><h2 class="sec-h">In drie stappen geregeld.</h2>
-<div class="plan">${d.plan.map((s, i) => `<div class="pstep"><div class="n">0${i + 1}</div><h3>${esc(s.stap)}</h3><p>${esc(s.uitleg)}</p></div>`).join('')}</div></div></section>
-<!-- WAT WE DOEN -->
-<section id="werk" style="padding-top:0"><div class="wrap reveal"><div class="lab">Wat we bieden</div><h2 class="sec-h">Vakwerk, tot in de details.</h2>
-<div class="svc">${d.diensten.concat([{ t: 'En meer', d: 'Neem contact op en we kijken samen wat past.' }]).map((s, i) => `<div class="svc-item"><div class="ic">${icon(i)}</div><h3>${esc(s.t)}</h3><p>${esc(s.d)}</p></div>`).join('')}</div>
-<div class="duo"><div class="a"></div><div class="b"></div></div></div></section>
-<!-- SUCCES + STATS -->
-<section class="success"><div class="wrap reveal"><div class="lab">Het resultaat</div><h2 class="sec-h">Zo voelt het straks.</h2>
-<div class="succ-grid">${d.succes_punten.map(p => `<div class="succ"><span class="mk">✦</span><span>${esc(p)}</span></div>`).join('')}</div>
-<div class="stats"><div class="stat"><div class="num" data-count="4.9" data-suffix="★" data-dec="1">0★</div><div class="l">Gemiddelde beoordeling</div></div><div class="stat"><div class="num" data-count="24" data-suffix="u">0u</div><div class="l">Reactie op uw aanvraag</div></div><div class="stat"><div class="num" data-count="100" data-suffix="%">0%</div><div class="l">Vrijblijvend en eerlijk</div></div></div>
-</div></section>
-<div class="quote"><div class="wrap reveal"><p>"${esc(rev[0])}"</p><span>${esc(rev[1].toUpperCase())}</span></div></div>
-${faqSection(d, '')}
-<!-- DIRECTE CTA -->
-<div class="form" id="contact"><div class="wrap reveal">
-<div><div class="lab">Contact</div><h2>Klaar om te <span>beginnen</span>?</h2>
-<div class="checks"><span><span class="ck">✦</span>Gratis en vrijblijvend</span><span><span class="ck">✦</span>Reactie binnen 24 uur</span><span><span class="ck">✦</span>Persoonlijk contact</span></div></div>
-<div><div class="field"><label>Naam</label><input placeholder="Uw naam"></div><div class="field"><label>E-mail of telefoon</label><input placeholder="Waarop we u bereiken"></div><div class="field"><label>Uw vraag</label><textarea rows="3" placeholder="Waar kunnen we mee helpen?"></textarea></div><button>${esc(d.directe_cta)}</button><div class="fmini">We nemen meestal dezelfde dag nog contact op.</div></div>
-</div></div>
-<footer><div class="wrap"><span style="color:var(--bone);font-weight:700">${esc(d.bedrijf.toUpperCase())}</span><span>${mail(d)} · ${tel(d)}</span></div></footer>
-${stickyCta(d)}
-${wowJs()}
-</body></html>`;
-}
-
-// ============================================================
-// TEMPLATE — ZAKELIJK  (corporate, strak, vertrouwen, B2B)
-// StoryBrand-opbouw, één merkaccent, professioneel grid.
+// CONCEPT 3 — STATEMENT (zakelijk): modern & uitgesproken
+// Type-hero (XXL kop) met fotoband eronder · tellende cijfers ·
+// donkere diensten-band · afwisselende werk-rijen · sticky CTA
 // ============================================================
 function zakelijk(d) {
-  return `${head(d, 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap')}
-<style>
-:root{--accent:${d.accent};--deep:${d.accentDeep};--tint:${d.tint};--ink:#141922;--soft:#5b6573;--bg:#ffffff;--panel:#f6f7f9;--line:#e6e9ee}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1200px;margin:0 auto;padding:0 40px}
-h1,h2,h3{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;line-height:1.12;letter-spacing:-.02em}
-a{color:inherit}
-/* utility bar */
-.util{background:var(--ink);color:#fff}
-.util .wrap{display:flex;justify-content:space-between;align-items:center;height:42px;font-size:13px}
-.util .l{display:flex;gap:24px;color:#c7ccd4}
-.util .l a{text-decoration:none}
-.util .r{color:#c7ccd4}
-.util .r b{color:#fff}
-/* nav */
-nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-.nav-in{display:flex;justify-content:space-between;align-items:center;height:74px;max-width:1200px;margin:0 auto;padding:0 40px}
-.brand{display:flex;align-items:center;gap:11px;font-family:'Plus Jakarta Sans';font-weight:800;font-size:20px;letter-spacing:-.01em}
-.logo{width:36px;height:36px;border-radius:9px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;font-size:17px}
-.nav-links{display:flex;gap:30px;align-items:center}
-.nav-links a{text-decoration:none;font-size:15px;font-weight:500;color:var(--soft)}
-.nav-links a:hover{color:var(--ink)}
-.nav-cta{background:var(--accent);color:#fff!important;padding:11px 22px;border-radius:9px;font-size:14px;font-weight:600;text-decoration:none;transition:.2s}
-.nav-cta:hover{background:var(--deep)}
-/* hero */
-header{padding:64px 0 0}
-.hero{display:grid;grid-template-columns:1fr 1.02fr;gap:56px;align-items:center}
-.eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:13px;font-weight:600;letter-spacing:.04em;color:var(--deep);background:var(--tint);padding:7px 14px;border-radius:100px;margin-bottom:24px}
-.eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent)}
-h1{font-size:clamp(38px,4.6vw,56px);text-wrap:balance}
-.hero .sub{font-size:19px;color:var(--soft);margin-top:22px;max-width:40ch}
-.cta-row{margin-top:32px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-.btn{background:var(--accent);color:#fff;padding:15px 30px;border-radius:9px;font-size:15px;font-weight:600;text-decoration:none;transition:.2s}
-.btn:hover{background:var(--deep)}
-.btn-out{background:#fff;color:var(--ink);border:1px solid var(--line);padding:14px 26px;border-radius:9px;font-size:15px;font-weight:600;text-decoration:none}
-.btn-out:hover{border-color:var(--ink)}
-.hero-media{position:relative}
-.hero-img{aspect-ratio:4/3.4;min-height:480px;border-radius:18px;box-shadow:0 40px 80px -50px rgba(20,25,34,.55);${bg(d.fotos.hero, d.accentDeep)}}
-.proof-badge{position:absolute;left:22px;bottom:22px;background:#fff;border-radius:14px;padding:15px 20px;box-shadow:0 18px 44px -18px rgba(20,25,34,.45);display:flex;align-items:center;gap:13px}
-.proof-badge .st{color:var(--accent);font-size:16px}
-.proof-badge b{font-family:'Plus Jakarta Sans';font-size:18px}
-.proof-badge span{display:block;font-size:12px;color:var(--soft)}
-/* usp bar */
-.uspbar{margin-top:60px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--panel)}
-.uspbar .wrap{display:grid;grid-template-columns:repeat(3,1fr)}
-.uspbar .u{padding:22px 0;display:flex;align-items:center;gap:12px;font-size:15px;font-weight:500}
-.uspbar .u+.u{padding-left:36px;border-left:1px solid var(--line)}
-.uspbar .ck{width:26px;height:26px;border-radius:7px;background:var(--tint);color:var(--accent);display:grid;place-items:center;font-size:13px;font-weight:700;flex-shrink:0}
-/* sections */
-section{padding:90px 0}
-.lab{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
-.sec-h{font-size:clamp(30px,4vw,42px);max-width:22ch;margin-bottom:46px}
-.sec-h.ctr{margin-left:auto;margin-right:auto;text-align:center}
-/* probleem */
-.problem{background:var(--panel)}
-.prob-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
-.prob{background:#fff;border:1px solid var(--line);border-radius:14px;padding:30px 28px}
-.prob .x{width:40px;height:40px;border-radius:10px;background:var(--tint);color:var(--accent);display:grid;place-items:center;font-size:20px;font-weight:700;margin-bottom:18px}
-.prob p{font-size:16px;color:var(--ink)}
-/* gids */
-.guide{border-top:1px solid var(--line)}
-.guide .wrap{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
-.guide .emp{font-family:'Plus Jakarta Sans';font-weight:700;font-size:clamp(24px,3.2vw,34px);line-height:1.2;letter-spacing:-.02em}
-.guide .aut{margin-top:18px;font-size:17px;color:var(--soft)}
-.qcard{background:var(--ink);color:#fff;border-radius:16px;padding:38px}
-.qcard .st{color:var(--accent);font-size:16px;margin-bottom:14px}
-.qcard blockquote{font-family:'Plus Jakarta Sans';font-weight:600;font-size:21px;line-height:1.4}
-.qcard cite{display:block;margin-top:20px;font-style:normal;font-size:14px;color:#c7ccd4}
-/* plan */
-.plan{display:grid;grid-template-columns:repeat(3,1fr);gap:0;position:relative}
-.pstep{padding:0 28px}
-.pstep:first-child{padding-left:0}.pstep:last-child{padding-right:0}
-.pstep .n{width:48px;height:48px;border-radius:12px;background:var(--accent);color:#fff;display:grid;place-items:center;font-family:'Plus Jakarta Sans';font-weight:800;font-size:20px;margin-bottom:20px}
-.pstep h3{font-size:21px;margin-bottom:10px}
-.pstep p{font-size:15px;color:var(--soft)}
-/* diensten */
-.diensten{background:var(--panel)}
-.svc{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
-.svc-item{background:#fff;border:1px solid var(--line);border-radius:14px;padding:32px 28px;transition:.2s}
-.svc-item:hover{border-color:var(--accent);box-shadow:0 20px 40px -28px rgba(20,25,34,.35)}
-.svc-item .ic{width:48px;height:48px;border-radius:11px;background:var(--tint);color:var(--accent);display:grid;place-items:center;margin-bottom:18px}
-.svc-item .ic svg{width:24px;height:24px}
-.svc-item h3{font-size:21px;margin-bottom:9px}
-.svc-item p{font-size:15px;color:var(--soft)}
-.band-imgs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-top:56px;padding-bottom:8px}
-.band-imgs div{height:260px;border-radius:16px}
-.band-imgs .a{${bg(d.fotos.a, d.accentDeep)}}.band-imgs .b{${bg(d.fotos.b, d.accentDeep)}}.band-imgs .c{${bg(d.fotos.c, d.accentDeep)}}
-/* succes + stats */
-.success{background:var(--ink);color:#fff}
-.success .lab{color:var(--accent)}
-.success .sec-h{color:#fff}
-.succ-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-bottom:54px}
-.succ .s{display:flex;gap:13px;align-items:flex-start;font-size:17px;color:#e7eaef}
-.succ .ck{width:26px;height:26px;border-radius:7px;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700;flex-shrink:0}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:30px;border-top:1px solid rgba(255,255,255,.12);padding-top:48px}
-.stat .num{font-family:'Plus Jakarta Sans';font-weight:800;font-size:clamp(34px,4.4vw,46px);color:var(--accent);line-height:1}
-.stat .l2{margin-top:8px;color:#aab2bd;font-size:14px}
-/* cta */
-.form{background:var(--panel)}
-.form .wrap{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
-.form h2{font-size:clamp(30px,4vw,44px)}
-.checks{margin-top:22px;display:flex;flex-direction:column;gap:11px}
-.checks span{display:flex;gap:11px;align-items:center;font-size:15px;color:var(--soft)}
-.checks .ck{width:24px;height:24px;border-radius:7px;background:var(--tint);color:var(--accent);display:grid;place-items:center;font-size:12px;font-weight:700;flex-shrink:0}
-.fcard{background:#fff;border:1px solid var(--line);border-radius:16px;padding:36px}
-.field{margin-bottom:18px}
-.field label{display:block;font-size:13px;font-weight:600;margin-bottom:8px}
-.field input,.field textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:13px 15px;font-family:inherit;font-size:16px;background:var(--bg)}
-.field input:focus,.field textarea:focus{outline:none;border-color:var(--accent)}
-.fcard button{width:100%;background:var(--accent);color:#fff;border:none;padding:16px;border-radius:10px;font-family:'Plus Jakarta Sans';font-weight:700;font-size:16px;cursor:pointer;transition:.2s}
-.fcard button:hover{background:var(--deep)}
-.fmini{text-align:center;font-size:13px;color:var(--soft);margin-top:12px}
-/* footer */
-footer{background:var(--ink);color:#aab2bd;padding:40px 0 96px}
-footer .wrap{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;font-size:14px}
-footer .fb{display:flex;align-items:center;gap:11px;color:#fff;font-family:'Plus Jakarta Sans';font-weight:800;font-size:18px}
-/* ===== WOW: scroll-animaties ===== */
-.js .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s cubic-bezier(.2,.6,.2,1),transform .7s cubic-bezier(.2,.6,.2,1)}
-.js .reveal.in{opacity:1;transform:none}
-@media(prefers-reduced-motion:reduce){.js .reveal{opacity:1;transform:none;transition:none}}
-/* ===== WOW: hover-zoom op foto's ===== */
-.hero-img,.band-imgs div{transition:transform .5s cubic-bezier(.2,.6,.2,1)}
-.band-imgs div{cursor:pointer}
-.band-imgs div:hover{transform:scale(1.03)}
-.svc-item{will-change:transform}
-/* ===== WOW: gloed achter hero ===== */
-header{position:relative;overflow:hidden}
-.hero-glow{position:absolute;top:-180px;right:-160px;width:620px;height:620px;border-radius:50%;background:radial-gradient(circle,var(--accent),transparent 60%);opacity:.12;pointer-events:none;z-index:0}
-.hero,.uspbar{position:relative;z-index:1}
-/* ===== WOW: sticky CTA ===== */
-.sticky-cta{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(20,25,34,.96);backdrop-filter:blur(10px);transform:translateY(120%);transition:transform .4s cubic-bezier(.2,.6,.2,1);border-top:1px solid rgba(255,255,255,.08)}
-.sticky-cta.show{transform:none}
-.sticky-cta .wrap{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-top:14px;padding-bottom:14px}
-.sticky-cta .t{color:#fff;font-family:'Plus Jakarta Sans';font-weight:700;font-size:16px}
-.sticky-cta .t span{display:block;color:#aab2bd;font-family:'Inter';font-weight:400;font-size:13px}
-.sticky-cta .sc-actions{display:flex;gap:12px;align-items:center;flex-shrink:0}
-.sticky-cta .sc-tel{color:#fff;text-decoration:none;font-weight:600;font-size:15px}
-/* ===== WOW: FAQ ===== */
-.faq{background:var(--panel)}
-.faq-wrap{max-width:820px;margin:0 auto}
-.faq-item{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:14px;overflow:hidden}
-.faq-q{width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:22px 26px;font-family:'Plus Jakarta Sans';font-weight:700;font-size:17px;color:var(--ink);display:flex;justify-content:space-between;align-items:center;gap:16px}
-.faq-q .ic{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--tint);color:var(--accent);display:grid;place-items:center;font-size:18px;font-weight:700;transition:transform .3s}
-.faq-item.open .faq-q .ic{transform:rotate(45deg)}
-.faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease;color:var(--soft);font-size:16px;line-height:1.6}
-.faq-a div{padding:0 26px 22px}
-@media(max-width:860px){
-  .util .l{gap:14px}.util .r{display:none}.nav-links{display:none}
-  .hero,.uspbar .wrap,.prob-grid,.guide .wrap,.plan,.svc,.band-imgs,.succ-grid,.stats,.form .wrap{grid-template-columns:1fr}
-  .hero-img{min-height:340px;aspect-ratio:4/3}
-  .uspbar .u+.u{border-left:none;padding-left:0}
-  .pstep{padding:0 0 8px}
-  .stats{gap:24px}
-  .sticky-cta .t span{display:none}
-  section{padding:60px 0}
-}
+  return `${headTag(d, 'https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap', '#0e1116')}
+<style>${RESET}
+:root{--acc:${d.accent};--ink:#0e1116;--ink2:#151a21;--bg:#ffffff;--grijs:#f3f5f7;--txt:#10141a;--mut:rgba(16,20,26,.62);--line:rgba(16,20,26,.12);--ldark:rgba(255,255,255,.14);--wmut:rgba(255,255,255,.72)}
+body{background:var(--bg);color:var(--txt);font-family:'Inter',system-ui,sans-serif;font-size:1.03rem;line-height:1.65;padding-bottom:64px}
+h1,h2,h3{font-family:'Sora',system-ui,sans-serif;font-weight:700;line-height:1.06;margin:0 0 .55em;letter-spacing:-.015em}
+.wrap{width:min(1180px,92vw);margin-inline:auto}
+.section{padding-block:clamp(4rem,8vw,6.6rem)}
+.kick{font-size:.72rem;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--mut);display:inline-flex;align-items:center;gap:.6rem;margin:0 0 1rem}
+.kick::before{content:"";width:10px;height:10px;background:var(--acc);border-radius:2px}
+.dark .kick{color:var(--wmut)}
+.btn{display:inline-flex;align-items:center;gap:.55rem;padding:.95rem 1.7rem;border-radius:10px;border:2px solid transparent;font-weight:700;font-size:.98rem;cursor:pointer;font-family:'Sora',sans-serif;transition:.25s}
+.btn svg{width:17px;height:17px}
+.btn-p{background:var(--ink);color:#fff}
+.btn-p:hover{background:var(--acc);color:var(--ink);transform:translateY(-2px)}
+.btn-a{background:var(--acc);color:var(--ink)}
+.btn-a:hover{transform:translateY(-2px);box-shadow:0 14px 30px -12px var(--acc)}
+.btn-g{border-color:var(--line);color:var(--txt)}
+.btn-g:hover{border-color:var(--ink)}
+.topbar{position:fixed;inset:0 0 auto;z-index:60;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid transparent;transition:.3s}
+.topbar.scrolled{border-color:var(--line)}
+.nav{display:flex;align-items:center;justify-content:space-between;padding-block:1rem}
+.brand{font-family:'Sora',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:.02em;text-transform:uppercase}
+.brand i{font-style:normal;color:var(--acc)}
+.nav-links{display:none;gap:2rem;list-style:none;margin:0;padding:0}
+.nav-links a{font-size:.8rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);transition:.25s}
+.nav-links a:hover{color:var(--txt)}
+.nav-cta{display:none;padding:.65rem 1.2rem;font-size:.85rem}
+.nav-toggle{display:inline-flex;flex-direction:column;gap:5px;background:none;border:0;padding:.5rem;cursor:pointer}
+.nav-toggle span{width:24px;height:2px;background:var(--txt);transition:.3s}
+.nav-toggle.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.nav-toggle.open span:nth-child(2){opacity:0}
+.nav-toggle.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+@media(min-width:900px){.nav-links{display:flex}.nav-cta{display:inline-flex}.nav-toggle{display:none}}
+.mobile-panel{position:fixed;inset:0;z-index:55;background:rgba(255,255,255,.98);display:grid;place-content:center;text-align:center;gap:1.5rem;opacity:0;pointer-events:none;transition:.3s}
+.mobile-panel.open{opacity:1;pointer-events:auto}
+.mobile-panel a{font-family:'Sora',sans-serif;font-weight:800;font-size:1.6rem;text-transform:uppercase}
+body.no-scroll{overflow:hidden}
+/* type-hero + fotoband */
+.hero{padding-top:8rem}
+.hero h1{font-size:clamp(2.7rem,7.2vw,5.4rem);max-width:16ch}
+.hero h1 b{color:var(--acc)}
+.hero .lead{font-size:clamp(1.05rem,1.6vw,1.25rem);color:var(--mut);max-width:36rem;margin-top:1.1rem}
+.hero-cta{display:flex;flex-wrap:wrap;gap:.9rem;margin-top:1.9rem}
+.foto-band{margin-top:clamp(2.4rem,5vw,3.6rem);border-radius:18px;overflow:hidden;position:relative;background:linear-gradient(140deg,#1b202a,#0f1218);aspect-ratio:21/9;min-height:260px}
+.foto-band img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.usp-strip{display:grid;border-block:1px solid var(--line)}
+@media(min-width:700px){.usp-strip{grid-template-columns:repeat(3,1fr)}}
+.usp-strip div{padding:1.4rem 1.6rem;display:flex;align-items:center;gap:.8rem;font-weight:600;font-size:.95rem}
+.usp-strip div+div{border-top:1px solid var(--line)}
+@media(min-width:700px){.usp-strip div+div{border-top:0;border-left:1px solid var(--line)}}
+.usp-strip svg{width:18px;height:18px;color:var(--acc);flex:none}
+/* stats donker met tellers */
+.dark{background:var(--ink);color:#fff}
+.stats{display:grid;gap:2rem;text-align:center}
+@media(min-width:700px){.stats{grid-template-columns:repeat(3,1fr)}}
+.stat .num{font-family:'Sora',sans-serif;font-weight:800;font-size:clamp(2.6rem,6vw,4rem);color:var(--acc);line-height:1}
+.stat .lbl{margin-top:.5rem;color:var(--wmut);font-size:.95rem}
+/* pijn */
+.pijn-grid{display:grid;gap:1.4rem}
+@media(min-width:700px){.pijn-grid{grid-template-columns:repeat(3,1fr)}}
+.pijn{background:var(--grijs);border-radius:14px;padding:1.6rem;border-left:4px solid var(--acc)}
+.pijn b{font-family:'Sora',sans-serif;font-size:.8rem;letter-spacing:.18em;text-transform:uppercase;color:var(--mut)}
+.pijn p{margin:.5rem 0 0}
+/* diensten donker */
+.d-grid{display:grid;gap:1.4rem}
+@media(min-width:760px){.d-grid{grid-template-columns:repeat(3,1fr)}}
+.d-card{border:1px solid var(--ldark);border-radius:16px;padding:1.9rem 1.7rem;transition:.3s;background:var(--ink2)}
+.d-card:hover{border-color:var(--acc);transform:translateY(-5px)}
+.d-card .nr{font-family:'Sora',sans-serif;font-weight:800;font-size:2.6rem;line-height:1;color:transparent;-webkit-text-stroke:1.5px var(--acc)}
+.d-card h3{font-size:1.3rem;margin:.9rem 0 .35rem;color:#fff}
+.d-card p{margin:0;color:var(--wmut);font-size:.96rem}
+/* werk: afwisselende rijen */
+.werk-rij{display:grid;gap:2rem;align-items:center;padding-block:clamp(1.8rem,4vw,3rem)}
+@media(min-width:860px){.werk-rij{grid-template-columns:1.15fr .85fr;gap:3.6rem}.werk-rij.omgekeerd .w-foto{order:2}.werk-rij.omgekeerd .w-tekst{order:1}}
+.werk-rij+.werk-rij{border-top:1px solid var(--line)}
+.w-foto{position:relative;border-radius:16px;overflow:hidden;background:linear-gradient(140deg,#1b202a,#0f1218);aspect-ratio:16/10}
+.w-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .6s}
+.werk-rij:hover .w-foto img{transform:scale(1.04)}
+.w-tekst .nr{font-family:'Sora',sans-serif;font-weight:800;color:transparent;-webkit-text-stroke:1.5px var(--acc);font-size:2.2rem;line-height:1}
+.w-tekst h3{font-size:clamp(1.5rem,2.6vw,2rem);margin:.7rem 0 .4rem}
+.w-tekst p{color:var(--mut);max-width:30rem}
+/* over compact */
+.over{display:grid;gap:2.4rem;align-items:center}
+@media(min-width:860px){.over{grid-template-columns:.75fr 1.25fr;gap:4rem}}
+.over .ph{border-radius:16px;overflow:hidden;position:relative;aspect-ratio:4/5;background:linear-gradient(140deg,#1b202a,#0f1218)}
+.over .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.over .tag{position:absolute;left:1rem;top:1rem;background:var(--acc);color:var(--ink);font-family:'Sora',sans-serif;font-weight:800;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;padding:.45rem .9rem;border-radius:8px;z-index:2}
+/* stappenbalk */
+.stap-balk{display:grid;gap:1.2rem}
+@media(min-width:760px){.stap-balk{grid-template-columns:repeat(3,1fr)}}
+.stap{background:#fff;border:1px solid var(--line);border-radius:14px;padding:1.6rem;position:relative;overflow:hidden}
+.stap::after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--acc)}
+.stap b{font-family:'Sora',sans-serif;font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}
+.stap h3{font-size:1.25rem;margin:.5rem 0 .3rem}
+.stap p{margin:0;color:var(--mut);font-size:.95rem}
+/* reviews */
+.rev-grid{display:grid;gap:1.4rem}
+@media(min-width:760px){.rev-grid{grid-template-columns:repeat(3,1fr)}}
+.rev{background:var(--grijs);border-radius:14px;padding:1.7rem;border-top:4px solid var(--acc)}
+.rev q{quotes:'"' '"';font-weight:500}
+.rev cite{display:block;margin-top:.9rem;font-style:normal;font-size:.88rem;color:var(--mut);font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.stars{display:inline-flex;gap:2px;color:var(--acc);margin-bottom:.7rem}
+.stars svg{width:14px;height:14px;fill:currentColor}
+/* faq */
+.faq-list{max-width:48rem;margin-inline:auto}
+.faq{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:.9rem;overflow:hidden}
+.faq summary{display:flex;justify-content:space-between;align-items:center;gap:1rem;cursor:pointer;list-style:none;padding:1.15rem 1.3rem;font-family:'Sora',sans-serif;font-weight:600;font-size:1.05rem}
+.faq summary::-webkit-details-marker{display:none}
+.faq .plus{flex:none;width:28px;height:28px;border-radius:8px;background:var(--grijs);display:grid;place-items:center;color:var(--txt);transition:.3s}
+.faq .plus svg{width:13px;height:13px}
+.faq[open] .plus{transform:rotate(45deg);background:var(--acc)}
+.faq-a{padding:0 1.3rem 1.2rem;color:var(--mut)}
+/* contact donker */
+.c-grid{display:grid;gap:2.6rem}
+@media(min-width:940px){.c-grid{grid-template-columns:1fr 1.05fr;gap:4rem;align-items:center}}
+.c-grid h2{color:#fff}
+.c-grid .lead{color:var(--wmut)}
+.c-check{display:grid;gap:.7rem;margin-top:1.6rem;color:var(--wmut)}
+.c-check span{display:flex;gap:.6rem;align-items:center}
+.c-check svg{width:16px;height:16px;color:var(--acc)}
+.fcard{background:#fff;color:var(--txt);border-radius:18px;padding:clamp(1.6rem,3vw,2.4rem)}
+.fgrid{display:grid;gap:1rem}
+@media(min-width:640px){.fgrid{grid-template-columns:1fr 1fr}.sp2{grid-column:1/-1}}
+.fcard label{display:block;font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-bottom:.4rem}
+.fcard input,.fcard textarea{width:100%;padding:.85rem 1rem;border:1px solid var(--line);border-radius:10px;font:inherit}
+.fcard textarea{min-height:110px;resize:vertical}
+footer{background:var(--ink);color:var(--wmut);padding:2.4rem 0;font-size:.92rem}
+.f-in{display:flex;flex-wrap:wrap;justify-content:space-between;gap:1rem;align-items:center}
+/* sticky CTA */
+.sticky{position:fixed;left:0;right:0;bottom:0;z-index:70;background:var(--ink);border-top:1px solid var(--ldark);transform:translateY(110%);transition:transform .35s}
+.sticky.show{transform:none}
+.sticky .wrap{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-block:.7rem}
+.sticky span{color:#fff;font-family:'Sora',sans-serif;font-weight:700;font-size:.92rem}
+.sticky .btn{padding:.6rem 1.2rem;font-size:.85rem}
+@media(max-width:560px){.sticky span{display:none}.sticky .wrap{justify-content:center}}
 </style></head><body>
-<script>document.documentElement.className='js';document.body.className='js';</script>
-<div class="util"><div class="wrap"><div class="l"><a href="mailto:${mail(d)}">✉ ${mail(d)}</a><a href="tel:${tel(d)}">✆ ${tel(d)}</a></div><div class="r"><b>Gratis &amp; vrijblijvend</b> · reactie binnen 24 uur</div></div></div>
-<nav><div class="nav-in"><div class="brand"><span class="logo">${esc(d.bedrijf[0])}</span> ${esc(d.bedrijf)}</div><div class="nav-links"><a href="#aanpak">Aanpak</a><a href="#diensten">Diensten</a><a href="#resultaat">Resultaat</a><a href="#contact" class="nav-cta">${esc(d.directe_cta)}</a></div></div></nav>
-<!-- HELD -->
-<header><div class="hero-glow"></div><div class="wrap"><div class="hero">
-<div class="reveal"><div class="eyebrow">${esc(d.label)}</div><h1>${esc(d.oneliner)}</h1><p class="sub">${esc(d.subkop)}</p>
-<div class="cta-row"><a href="#contact" class="btn">${esc(d.directe_cta)}</a><a href="#aanpak" class="btn-out">${esc(d.transitionele_cta)}</a></div></div>
-<div class="hero-media reveal"><div class="hero-img"></div><div class="proof-badge"><span class="st">★★★★★</span><div><b>4,9 / 5</b><span>klantbeoordeling</span></div></div></div>
-</div></div>
-<div class="uspbar"><div class="wrap">${d.usps.map(u => `<div class="u"><span class="ck">✓</span>${esc(u)}</div>`).join('')}</div></div>
-</header>
-<!-- PROBLEEM -->
-<section class="problem"><div class="wrap reveal"><div class="lab">De uitdaging</div><h2 class="sec-h">${esc(d.probleem_titel)}</h2>
-<div class="prob-grid">${d.probleem_punten.map(p => `<div class="prob"><div class="x">!</div><p>${esc(p)}</p></div>`).join('')}</div></div></section>
-<!-- GIDS -->
-<section class="guide"><div class="wrap reveal">
-<div><div class="lab">Uw partner</div><div class="emp">${esc(d.gids_empathie)}</div><p class="aut">${esc(d.gids_autoriteit)}</p></div>
-<div class="qcard"><div class="st">★★★★★</div><blockquote>"${esc(d.reviews[0][0])}"</blockquote><cite>— ${esc(d.reviews[0][1])}, klant</cite></div>
+<header class="topbar" id="hdr"><div class="wrap nav">
+<a class="brand" href="#top">${esc(d.bedrijf)}<i>.</i></a>
+<ul class="nav-links"><li><a href="#diensten">Diensten</a></li><li><a href="#werk">Werk</a></li><li><a href="#over">Over</a></li><li><a href="#contact">Contact</a></li></ul>
+<a class="btn btn-a nav-cta" href="#contact">${esc(d.directe_cta)}</a>
+<button class="nav-toggle" id="navToggle" aria-label="Menu"><span></span><span></span><span></span></button>
+</div></header>
+<nav class="mobile-panel" id="mobielmenu"><a href="#diensten">Diensten</a><a href="#werk">Werk</a><a href="#over">Over</a><a href="#contact">Contact</a><a class="btn btn-a" href="#contact">${esc(d.directe_cta)}</a></nav>
+<main id="top">
+<section class="hero"><div class="wrap">
+<p class="kick fx fx-1">${esc(d.label)}</p>
+<h1 class="fx fx-2">${esc(splitKop(d.oneliner)[0])} <b>${esc(splitKop(d.oneliner)[1] || '')}</b></h1>
+<p class="lead fx fx-3">${esc(d.subkop)}</p>
+<div class="hero-cta fx fx-4"><a class="btn btn-a" href="#contact">${esc(d.directe_cta)} ${ARROW}</a><a class="btn btn-g" href="#werk">${esc(d.transitionele_cta)}</a></div>
+<div class="foto-band fx fx-5">${img(d.fotos.hero)}</div>
 </div></section>
-<!-- PLAN -->
-<section id="aanpak"><div class="wrap reveal"><div class="lab">Onze aanpak</div><h2 class="sec-h">Zo werken we, in drie stappen.</h2>
-<div class="plan">${d.plan.map((s, i) => `<div class="pstep"><div class="n">${i + 1}</div><h3>${esc(s.stap)}</h3><p>${esc(s.uitleg)}</p></div>`).join('')}</div></div></section>
-<!-- DIENSTEN -->
-<section class="diensten" id="diensten"><div class="wrap reveal"><div class="lab">Onze diensten</div><h2 class="sec-h">Vakwerk waar u op kunt bouwen.</h2>
-<div class="svc">${d.diensten.map((s, i) => `<div class="svc-item"><div class="ic">${icon(i)}</div><h3>${esc(s.t)}</h3><p>${esc(s.d)}</p></div>`).join('')}</div>
-<div class="band-imgs"><div class="a"></div><div class="b"></div><div class="c"></div></div></div></section>
-<!-- SUCCES + STATS -->
-<section class="success" id="resultaat"><div class="wrap reveal"><div class="lab">Het resultaat</div><h2 class="sec-h">Wat het u oplevert.</h2>
-<div class="succ-grid">${d.succes_punten.map(p => `<div class="s"><span class="ck">✓</span><span>${esc(p)}</span></div>`).join('')}</div>
-<div class="stats"><div class="stat"><div class="num" data-count="4.9" data-suffix="★" data-dec="1">0★</div><div class="l2">Klantbeoordeling</div></div><div class="stat"><div class="num" data-count="24" data-suffix="u">0u</div><div class="l2">Reactietijd</div></div><div class="stat"><div class="num" data-count="100" data-suffix="%">0%</div><div class="l2">Vrijblijvend</div></div><div class="stat"><div class="num" data-count="10" data-suffix="+">0+</div><div class="l2">Jaar ervaring</div></div></div>
+<div class="usp-strip">${d.usps.map(u => `<div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>${esc(u)}</div>`).join('')}</div>
+<section class="section dark"><div class="wrap">
+<div class="stats">
+<div class="stat reveal"><div class="num" data-count="4.9" data-dec="1" data-suffix="★">0★</div><div class="lbl">Gemiddelde klantbeoordeling</div></div>
+<div class="stat reveal d1"><div class="num" data-count="24" data-suffix="u">0u</div><div class="lbl">Reactie op uw aanvraag</div></div>
+<div class="stat reveal d2"><div class="num" data-count="100" data-suffix="%">0%</div><div class="lbl">Vrijblijvend en transparant</div></div>
+</div></div></section>
+<section class="section"><div class="wrap">
+<div class="reveal" style="max-width:46rem;margin-bottom:2.2rem"><p class="kick">Herkenbaar?</p><h2 style="font-size:clamp(1.9rem,4vw,2.9rem)">${esc(d.probleem_titel)}</h2></div>
+<div class="pijn-grid">${d.probleem_punten.map((p, i) => `<div class="pijn reveal d${i + 1}"><b>0${i + 1}</b><p>${esc(p)}</p></div>`).join('')}</div>
 </div></section>
-${d.faq && d.faq.length ? `<!-- FAQ -->
-<section class="faq"><div class="wrap reveal"><div class="lab" style="text-align:center">Veelgestelde vragen</div><h2 class="sec-h ctr">Goed om te weten.</h2>
-<div class="faq-wrap">${d.faq.map(f => `<div class="faq-item"><button class="faq-q">${esc(f.v)}<span class="ic">+</span></button><div class="faq-a"><div>${esc(f.a)}</div></div></div>`).join('')}</div>
+<section class="section dark" id="diensten"><div class="wrap">
+<div class="reveal" style="max-width:46rem;margin-bottom:2.2rem"><p class="kick">Diensten</p><h2 style="font-size:clamp(1.9rem,4vw,2.9rem);color:#fff">Dit doen we voor u</h2></div>
+<div class="d-grid">${d.diensten.map((s, i) => `<article class="d-card reveal d${i + 1}"><span class="nr">0${i + 1}</span><h3>${esc(s.t)}</h3><p>${esc(s.d)}</p></article>`).join('')}</div>
+</div></section>
+<section class="section" id="werk"><div class="wrap">
+<div class="reveal" style="max-width:46rem"><p class="kick">Ons werk</p><h2 style="font-size:clamp(1.9rem,4vw,2.9rem)">Resultaat dat voor zich spreekt</h2></div>
+${[d.fotos.a, d.fotos.b].map((f, i) => `<div class="werk-rij ${i % 2 ? 'omgekeerd' : ''} reveal"><div class="w-foto">${img(f)}</div><div class="w-tekst"><span class="nr">0${i + 1}</span><h3>${esc((d.diensten[i] || d.diensten[0]).t)}</h3><p>${esc((d.diensten[i] || d.diensten[0]).d)}</p><a class="btn btn-g" href="#contact">${esc(d.transitionele_cta)}</a></div></div>`).join('')}
+</div></section>
+<section class="section" id="over" style="padding-top:0"><div class="wrap over">
+<div class="ph reveal"><span class="tag">Team</span>${img(d.fotos.portret, esc(d.bedrijf))}</div>
+<div class="reveal d1"><p class="kick">Over ${esc(d.bedrijf)}</p><h2 style="font-size:clamp(1.9rem,4vw,2.9rem)">Nuchter, vakkundig, afspraak is afspraak</h2>
+<p>${esc(d.gids_empathie)}</p><p style="color:var(--mut)">${esc(d.gids_autoriteit)}</p>
+<div class="stap-balk" style="margin-top:1.6rem">${d.plan.map((s, i) => `<div class="stap"><b>Stap 0${i + 1}</b><h3>${esc(s.stap)}</h3><p>${esc(s.uitleg)}</p></div>`).join('')}</div></div>
+</div></section>
+<section class="section" style="background:var(--grijs)"><div class="wrap">
+<div class="reveal" style="max-width:46rem;margin-bottom:2.2rem"><p class="kick">Reviews</p><h2 style="font-size:clamp(1.9rem,4vw,2.9rem)">Wat klanten zeggen</h2></div>
+<div class="rev-grid">${d.reviews.map((r, i) => `<article class="rev reveal d${i + 1}" style="background:#fff">${STARS}<q>${esc(r[0])}</q><cite>${esc(r[1])}</cite></article>`).join('')}</div>
+</div></section>
+${d.faq && d.faq.length ? `<section class="section"><div class="wrap">
+<div class="reveal" style="text-align:center;margin-bottom:2rem"><p class="kick" style="justify-content:center">FAQ</p><h2 style="font-size:clamp(1.9rem,4vw,2.9rem)">Goed om te weten</h2></div>
+<div class="faq-list reveal d1">${d.faq.map(f => `<details class="faq"><summary>${esc(f.v)}<span class="plus">${PLUS}</span></summary><div class="faq-a"><p>${esc(f.a)}</p></div></details>`).join('')}</div>
 </div></section>` : ''}
-<!-- DIRECTE CTA -->
-<div class="form" id="contact"><div class="wrap reveal" style="padding:88px 40px">
-<div><div class="lab">Aan de slag</div><h2>${esc(d.directe_cta)} vandaag nog.</h2>
-<div class="checks"><span><span class="ck">✓</span>Gratis en vrijblijvend</span><span><span class="ck">✓</span>Reactie binnen 24 uur</span><span><span class="ck">✓</span>Persoonlijk contact, geen callcenter</span></div></div>
-<div class="fcard"><div class="field"><label>Naam</label><input placeholder="Uw naam"></div><div class="field"><label>E-mail of telefoon</label><input placeholder="Waarop we u bereiken"></div><div class="field"><label>Uw vraag</label><textarea rows="3" placeholder="Waar kunnen we mee helpen?"></textarea></div><button>${esc(d.directe_cta)}</button><div class="fmini">We nemen meestal dezelfde dag nog contact op.</div></div>
-</div></div>
-<footer><div class="wrap"><div class="fb"><span class="logo">${esc(d.bedrijf[0])}</span> ${esc(d.bedrijf)}</div><span>${mail(d)} · ${tel(d)}</span></div></footer>
-
-<!-- WOW: sticky CTA -->
-<div class="sticky-cta" id="stickyCta"><div class="wrap"><div class="t">${esc(d.bedrijf)}<span>Gratis &amp; vrijblijvend · reactie binnen 24 uur</span></div><div class="sc-actions"><a class="sc-tel" href="tel:${tel(d)}">${tel(d)}</a><a href="#contact" class="btn">${esc(d.directe_cta)}</a></div></div></div>
-
-<script>
+<section class="section dark" id="contact"><div class="wrap c-grid">
+<div class="reveal"><p class="kick">Contact</p><h2 style="font-size:clamp(2rem,4.4vw,3.1rem)">${esc(d.directe_cta)}<span style="color:var(--acc)">.</span></h2>
+<p class="lead">Vertel kort wat u zoekt — u hoort binnen 24 uur van ons.</p>
+<div class="c-check"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Gratis &amp; vrijblijvend</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Reactie binnen 24 uur</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Bel direct: <a href="tel:${tel(d)}" style="color:#fff;font-weight:700">${tel(d)}</a></span></div></div>
+<div class="fcard reveal d1"><div class="fgrid"><div><label>Naam</label><input placeholder="Uw naam"></div><div><label>Telefoon of e-mail</label><input placeholder="Waarop we u bereiken"></div><div class="sp2"><label>Uw vraag</label><textarea placeholder="Waar kunnen we mee helpen?"></textarea></div><div class="sp2"><button class="btn btn-a" type="button" style="width:100%;justify-content:center">${esc(d.directe_cta)}</button></div></div></div>
+</div></section>
+</main>
+<footer><div class="wrap f-in"><span class="brand" style="color:#fff">${esc(d.bedrijf)}<i>.</i></span><span>${mail(d)} · ${tel(d)}</span><span style="opacity:.5;font-size:.82rem">Conceptontwerp door ClickCurve</span></div></footer>
+<div class="sticky" id="sticky"><div class="wrap"><span>${esc(d.bedrijf)} — gratis &amp; vrijblijvend</span><a class="btn btn-a" href="#contact">${esc(d.directe_cta)}</a></div></div>
+<script>${NAV_REVEAL_JS}
 (function(){
-  // 1) scroll-reveal
-  var io = new IntersectionObserver(function(entries){
-    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
-  }, { threshold: .14 });
-  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
-
-  // 2) tellende cijfers
-  function animateCount(el){
-    var target = parseFloat(el.getAttribute('data-count'));
-    var suffix = el.getAttribute('data-suffix') || '';
-    var dec = parseInt(el.getAttribute('data-dec') || '0', 10);
-    var dur = 1300, start = null;
-    function step(ts){
-      if(!start) start = ts;
-      var p = Math.min((ts - start) / dur, 1);
-      var eased = 1 - Math.pow(1 - p, 3);
-      var val = (target * eased).toFixed(dec).replace('.', ',');
-      el.textContent = val + suffix;
-      if(p < 1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-  }
-  var co = new IntersectionObserver(function(entries){
-    entries.forEach(function(e){ if(e.isIntersecting){ animateCount(e.target); co.unobserve(e.target); } });
-  }, { threshold: .5 });
-  document.querySelectorAll('.num[data-count]').forEach(function(el){ co.observe(el); });
-
-  // 3) sticky CTA: tonen na hero, verbergen bij contactformulier
-  var sticky = document.getElementById('stickyCta');
-  var contact = document.getElementById('contact');
-  window.addEventListener('scroll', function(){
-    var past = window.scrollY > 700;
-    var atForm = contact && contact.getBoundingClientRect().top < window.innerHeight;
-    if(past && !atForm) sticky.classList.add('show'); else sticky.classList.remove('show');
-  }, { passive: true });
-
-  // 4) FAQ-accordeon
-  document.querySelectorAll('.faq-q').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      var item = btn.parentElement;
-      var ans = item.querySelector('.faq-a');
-      var open = item.classList.toggle('open');
-      ans.style.maxHeight = open ? (ans.scrollHeight + 'px') : null;
-    });
-  });
+  function tel(el){var t=parseFloat(el.getAttribute('data-count')),sf=el.getAttribute('data-suffix')||'',dc=parseInt(el.getAttribute('data-dec')||'0',10),d=1300,s=null;
+    function st(ts){if(!s)s=ts;var p=Math.min((ts-s)/d,1),e=1-Math.pow(1-p,3);el.textContent=(t*e).toFixed(dc).replace('.',',')+sf;if(p<1)requestAnimationFrame(st);}requestAnimationFrame(st);}
+  var co=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){tel(e.target);co.unobserve(e.target)}})},{threshold:.5});
+  document.querySelectorAll('.num[data-count]').forEach(function(el){co.observe(el)});
+  var st=document.getElementById('sticky'),ct=document.getElementById('contact');
+  addEventListener('scroll',function(){var past=scrollY>650,bij=ct&&ct.getBoundingClientRect().top<innerHeight;st.classList.toggle('show',past&&!bij)},{passive:true});
 })();
 </script>
 </body></html>`;
 }
 
-module.exports = { editorial, vriendelijk, bold, zakelijk };
+module.exports = { editorial, vriendelijk, zakelijk };
