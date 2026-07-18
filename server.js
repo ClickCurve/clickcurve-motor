@@ -1,54 +1,76 @@
 // ============================================================
-// server.js — de ClickCurve motor als web-dienst (Render-klaar)
+// server.js — ClickCurve motor als web-dienst (Render + Cloudflare R2)
 //
 // Wat het doet:
-//  - Luistert op een webadres (POST /genereer) naar Make.
-//  - Ontvangt de leadgegevens (bedrijfsnaam, branche, omschrijving,
-//    naam, email, telefoon).
-//  - Roept de bestaande motor aan -> 3 concept-HTML's.
-//  - Slaat die op in de publieke map /sites en serveert ze.
-//  - Stuurt de 3 klikbare links als JSON terug naar Make.
+//  - Luistert op POST /genereer (aangeroepen door Make).
+//  - Roept de motor aan -> 3 concept-HTML's (tijdelijk op schijf).
+//  - Uploadt die 3 pagina's naar Cloudflare R2 (blijvende opslag).
+//  - Geeft de 3 publieke R2-links terug aan Make.
 //
-// Zo koppelt Make: HTTP-module -> POST naar https://<jouw-app>.onrender.com/genereer
+// Waarom R2: Render's schijf is tijdelijk en wordt bij herstart/
+// spin-down gewist. R2 is blijvend, dus links werken altijd.
 //
-// Benodigde omgevingsvariabelen (zet je in Render, niet in code):
-//  - ANTHROPIC_API_KEY
-//  - UNSPLASH_ACCESS_KEY
-//  - PUBLIC_BASE_URL   (bv. https://clickcurve-motor.onrender.com)
-//  - WEBHOOK_TOKEN     (zelf verzonnen wachtwoord; Make stuurt dit mee)
+// Omgevingsvariabelen (in Render instellen):
+//  Motor:
+//   - ANTHROPIC_API_KEY
+//   - UNSPLASH_ACCESS_KEY
+//   - WEBHOOK_TOKEN            (zelf verzonnen wachtwoord)
+//  Cloudflare R2:
+//   - R2_ACCOUNT_ID            (Cloudflare account-ID)
+//   - R2_ACCESS_KEY_ID         (R2 API-token: Access Key ID)
+//   - R2_SECRET_ACCESS_KEY     (R2 API-token: Secret Access Key)
+//   - R2_BUCKET                (naam van je bucket, bv. clickcurve-concepten)
+//   - R2_PUBLIC_BASE_URL       (publieke URL van de bucket, bv.
+//                               https://pub-xxxx.r2.dev  of je eigen domein)
 // ============================================================
 
 const express = require('express');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
+const crypto = require('crypto');
 const { genereerConcepten } = require('./motor');
+const {
+  S3Client,
+  PutObjectCommand,
+} = require('@aws-sdk/client-s3');
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true })); // ook form-encoded aankunnen
+app.use(express.urlencoded({ extended: true }));
 
-// map waar de gegenereerde sites komen te staan (publiek bereikbaar)
-const SITES_DIR = path.join(__dirname, 'sites');
-if (!fs.existsSync(SITES_DIR)) fs.mkdirSync(SITES_DIR, { recursive: true });
+// ---- Cloudflare R2 client (praat via de S3-standaard) ----
+const R2 = new S3Client({
+  region: 'auto',
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+  },
+});
+const R2_BUCKET = process.env.R2_BUCKET;
+const R2_PUBLIC = (process.env.R2_PUBLIC_BASE_URL || '').replace(/\/$/, '');
 
-// de sites publiek serveren op /sites/<bestand>.html
-app.use('/sites', express.static(SITES_DIR));
+function r2Klaar() {
+  return process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID &&
+    process.env.R2_SECRET_ACCESS_KEY && R2_BUCKET && R2_PUBLIC;
+}
 
-// simpele statuscheck (handig om te zien of de dienst leeft)
+// statuscheck
 app.get('/', (req, res) => {
   res.send('ClickCurve motor draait. Stuur een POST naar /genereer.');
 });
 
-// ---- de hoofdactie: lead binnen -> 3 concepten -> 3 links terug ----
+// ---- hoofdactie ----
 app.post('/genereer', async (req, res) => {
   try {
-    // 1) simpele beveiliging: Make moet het juiste token meesturen
+    // 1) token-check
     const token = req.headers['x-webhook-token'] || req.body.token;
     if (process.env.WEBHOOK_TOKEN && token !== process.env.WEBHOOK_TOKEN) {
       return res.status(401).json({ ok: false, fout: 'Ongeldig of ontbrekend token' });
     }
 
-    // 2) leadgegevens uit het verzoek halen (namen = de Custom ID's uit Elementor)
+    // 2) leadgegevens
     const b = req.body || {};
     const lead = {
       branche: b.branche || 'Onderneming',
@@ -59,16 +81,37 @@ app.post('/genereer', async (req, res) => {
     if (!b.bedrijfsnaam || !b.branche) {
       return res.status(400).json({ ok: false, fout: 'bedrijfsnaam en branche zijn verplicht' });
     }
+    if (!r2Klaar()) {
+      return res.status(500).json({ ok: false, fout: 'R2 is niet (volledig) geconfigureerd. Controleer de R2_* omgevingsvariabelen in Render.' });
+    }
 
-    // 3) de motor aanroepen -> schrijft 3 HTML-bestanden in SITES_DIR
-    const paden = await genereerConcepten(lead, SITES_DIR);
+    // 3) motor aanroepen -> 3 HTML's in een tijdelijke, unieke map
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-'));
+    const paden = await genereerConcepten(lead, tmpDir);
 
-    // 4) bestandsnamen omzetten naar publieke links
-    const base = (process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
-    const links = paden.map(p => `${base}/sites/${path.basename(p)}`);
+    // 4) elke pagina naar R2 uploaden onder een unieke, nette sleutel
+    //    map per aanvraag zodat namen nooit botsen: sites/<uniek>/<bestand>.html
+    const groep = `${slug(lead.bedrijf)}-${crypto.randomBytes(4).toString('hex')}`;
+    const links = [];
+    for (const p of paden) {
+      const bestand = path.basename(p);
+      const key = `sites/${groep}/${bestand}`;
+      const html = fs.readFileSync(p, 'utf8');
+      await R2.send(new PutObjectCommand({
+        Bucket: R2_BUCKET,
+        Key: key,
+        Body: html,
+        ContentType: 'text/html; charset=utf-8',
+        CacheControl: 'public, max-age=31536000',
+      }));
+      links.push(`${R2_PUBLIC}/${key}`);
+    }
 
-    // 5) links teruggeven aan Make
-    console.log(`✓ Concepten klaar voor ${lead.bedrijf}:`, links);
+    // 5) tijdelijke map opruimen (R2 heeft de bestanden nu)
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+
+    // 6) links teruggeven aan Make
+    console.log(`✓ Concepten op R2 voor ${lead.bedrijf}:`, links);
     res.json({
       ok: true,
       bedrijf: lead.bedrijf,
@@ -79,10 +122,14 @@ app.post('/genereer', async (req, res) => {
       links,
     });
   } catch (e) {
-    console.error('❌ Fout bij genereren:', e.message);
+    console.error('❌ Fout bij genereren:', e);
     res.status(500).json({ ok: false, fout: e.message });
   }
 });
+
+function slug(s) {
+  return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'bedrijf';
+}
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`ClickCurve motor luistert op poort ${PORT}`));
