@@ -72,14 +72,36 @@ app.post('/genereer', async (req, res) => {
 
     // 2) leadgegevens
     const b = req.body || {};
-    const lead = {
-      branche: b.branche || 'Onderneming',
-      bedrijf: b.bedrijfsnaam || b.bedrijf || 'Uw bedrijf',
-      omschrijving: b.omschrijving || '',
-      contact: { email: b.email || '', telefoon: b.telefoon || '' },
+
+    // Bescherming: als een mapping in Make kapot is, stuurt Make de letterlijke
+    // placeholder mee (bv. "{{2.fields.bedrijfnaam}}"). Die mag NOOIT op een
+    // conceptpagina belanden. Zulke waarden behandelen we als leeg.
+    const schoon = (v) => {
+      const s = String(v == null ? '' : v).trim();
+      if (!s) return '';
+      // herkent {{...}}, {...}, losse "fields.xxx" of "N.fields.xxx"
+      if (/\{\{|\}\}/.test(s)) return '';
+      if (/^\{.*\}$/.test(s)) return '';
+      if (/\b\d*\.?fields\.[a-z_]+/i.test(s)) return '';
+      return s;
     };
-    if (!b.bedrijfsnaam || !b.branche) {
-      return res.status(400).json({ ok: false, fout: 'bedrijfsnaam en branche zijn verplicht' });
+
+    const lead = {
+      branche: schoon(b.branche) || 'Onderneming',
+      bedrijf: schoon(b.bedrijfsnaam) || schoon(b.bedrijf) || 'Uw bedrijf',
+      omschrijving: schoon(b.omschrijving),
+      contact: { email: schoon(b.email), telefoon: schoon(b.telefoon) },
+    };
+
+    // verplichte velden controleren NA het schoonmaken, zodat kapotte
+    // mappings een duidelijke fout geven in plaats van een rare pagina
+    if (!schoon(b.bedrijfsnaam) || !schoon(b.branche)) {
+      console.error('❌ Ongeldige invoer ontvangen:', JSON.stringify({ bedrijfsnaam: b.bedrijfsnaam, branche: b.branche }));
+      return res.status(400).json({
+        ok: false,
+        fout: 'bedrijfsnaam en branche zijn verplicht en mogen geen onopgeloste Make-placeholder bevatten. Controleer de mapping in de HTTP-module.',
+        ontvangen: { bedrijfsnaam: b.bedrijfsnaam, branche: b.branche },
+      });
     }
     if (!r2Klaar()) {
       return res.status(500).json({ ok: false, fout: 'R2 is niet (volledig) geconfigureerd. Controleer de R2_* omgevingsvariabelen in Render.' });

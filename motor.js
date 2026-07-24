@@ -205,7 +205,7 @@ Belangrijk: one-liners en succes-punten gaan over de klant, niet over het bedrij
 // ============================================================
 // STAP 3 — Unsplash: zoekterm -> foto-URL
 // ============================================================
-async function zoekFoto(term, breedte = 1400) {
+async function zoekFoto(term, breedte = 1400, reserveTerm = '') {
   const key = process.env.UNSPLASH_ACCESS_KEY;
 
   // fallback zonder sleutel: een kleur-placeholder (laadt altijd)
@@ -213,16 +213,49 @@ async function zoekFoto(term, breedte = 1400) {
     return `https://placehold.co/${breedte}x${Math.round(breedte * 0.7)}/cccccc/666666?text=${encodeURIComponent(term)}`;
   }
 
-  const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(term)}&per_page=10&orientation=landscape&content_filter=high`;
-  const res = await fetch(url, { headers: { Authorization: `Client-ID ${key}` } });
-  if (!res.ok) throw new Error(`Unsplash fout: ${res.status}`);
-  const data = await res.json();
-  const results = data.results || [];
-  if (!results.length) return `https://placehold.co/${breedte}x${Math.round(breedte * 0.7)}/cccccc/666666?text=geen+foto`;
-  // kies willekeurig uit de top-resultaten, zodat de 4 foto's niet identiek zijn
-  const hit = results[Math.floor(Math.random() * Math.min(results.length, 6))];
-  // raw-URL met eigen breedte/kwaliteit
-  return `${hit.urls.raw}&w=${breedte}&q=80&fit=crop`;
+  // één zoekpoging
+  async function poging(q) {
+    const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(q)}&per_page=10&orientation=landscape&content_filter=high`;
+    const res = await fetch(url, { headers: { Authorization: `Client-ID ${key}` } });
+    if (!res.ok) {
+      // 403 = uurlimiet bereikt; dat willen we duidelijk in de log zien
+      console.log(`    ⚠ Unsplash gaf ${res.status} voor "${q}"${res.status === 403 ? ' (uurlimiet bereikt?)' : ''}`);
+      return null;
+    }
+    const data = await res.json();
+    const results = data.results || [];
+    if (!results.length) return null;
+    const hit = results[Math.floor(Math.random() * Math.min(results.length, 6))];
+    return `${hit.urls.raw}&w=${breedte}&q=80&fit=crop`;
+  }
+
+  // Steeds bredere zoektermen proberen. Specifieke termen (vooral voor de hero)
+  // leveren soms 0 resultaten; dan mag de foto niet wegvallen.
+  const woorden = String(term).trim().split(/\s+/);
+  const kandidaten = [
+    term,                                    // volledige term
+    woorden.slice(0, 3).join(' '),           // eerste 3 woorden
+    woorden.slice(0, 2).join(' '),           // eerste 2 woorden
+    reserveTerm,                             // branche-term als vangnet
+    woorden[woorden.length - 1],             // laatste woord (vaak het onderwerp)
+    'professional business',                 // laatste redmiddel: altijd resultaat
+  ].filter((v, i, a) => v && a.indexOf(v) === i);
+
+  for (const q of kandidaten) {
+    try {
+      const url = await poging(q);
+      if (url) {
+        if (q !== term) console.log(`    → foto gevonden via bredere term "${q}" (i.p.v. "${term}")`);
+        return url;
+      }
+    } catch (e) {
+      console.log(`    ⚠ Fout bij zoeken naar "${q}": ${e.message}`);
+    }
+  }
+
+  // alles geprobeerd: neutrale grijze plaat zonder storende tekst
+  console.log(`    ⚠ Geen enkele foto gevonden voor "${term}"`);
+  return `https://placehold.co/${breedte}x${Math.round(breedte * 0.7)}/e8e6e1/e8e6e1?text=+`;
 }
 
 // ============================================================
@@ -249,7 +282,13 @@ async function genereerConcepten(lead, outDir = path.join(__dirname, 'output')) 
   const fotoJobs = [];
   for (const k of KEYS) {
     const f = ai.concepten[k].fotos;
-    fotoJobs.push(zoekFoto(f.hero, 1800), zoekFoto(f.a, 900), zoekFoto(f.b, 900), zoekFoto(f.c, 900), zoekFoto(f.portret || f.hero, 900));
+    fotoJobs.push(
+      zoekFoto(f.hero, 1600, `${lead.branche} professional`),
+      zoekFoto(f.a, 900, lead.branche),
+      zoekFoto(f.b, 900, lead.branche),
+      zoekFoto(f.c, 900, lead.branche),
+      zoekFoto(f.portret || f.hero, 900, `${lead.branche} portrait`)
+    );
   }
   const alleFotos = await Promise.all(fotoJobs);
 
